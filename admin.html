@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>لوحة إدارة النادي</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--teal:#0E5E5B;--gold:#A9844B;--ink:#12302F;--mute:#56706E;--line:#DAD5C6}
+*{box-sizing:border-box;margin:0}body{background:#fff;color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;line-height:1.7;padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:980px;margin:auto;padding:16px}h2{margin:18px 0 10px;color:var(--teal)}h4{color:var(--teal)}
+input,select,textarea,button{font:inherit}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;color:var(--ink)}
+button{border:1px solid var(--teal);background:#fff;color:var(--teal);border-radius:10px;padding:5px 14px;cursor:pointer}button.p{background:var(--teal);color:#fff}button.d{border-color:#B3362B;color:#B3362B}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line);padding:10px 0;position:sticky;top:0;background:#fff;z-index:5}.bar button.on{background:var(--teal);color:#fff}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:12px;padding:8px 14px;margin:8px 0;flex-wrap:wrap}
+.tag{font-size:12px;border-radius:99px;padding:0 10px;border:1px solid var(--gold);color:var(--gold)}.tag.pub{background:var(--teal);color:#fff;border-color:var(--teal)}
+form,.box{border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;margin:10px 0}label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:500}
+.mini{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:6px}.node{border-inline-start:2px solid var(--gold);padding:2px 14px;margin:12px 0}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 20px;border-radius:99px;display:none}small{color:var(--mute)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div><div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<script>
+const SB_URL='https://dsinztikwvuqhhwrhisg.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzaW56dGlrd3Z1cWhod3JoaXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NTQ2MDcsImV4cCI6MjEwNjQzMDYwN30.MhBz5vD_s4u87y6c0tz1LgPtx18sjuEir0tju0f-ieQ';
+if(/YOUR_SUPABASE/.test(SB_URL+SB_KEY)){document.getElementById('app').innerHTML='<div style="padding:48px 20px;text-align:center;direction:rtl;font-family:sans-serif"><h2>⚠️ لم يتم ربط Supabase بعد</h2><p>ضعي Project URL و anon key في أول السكربت (السطر الذي يبدأ بـ SB_URL).</p></div>';throw new Error('Supabase keys not set')}
+const db=supabase.createClient(SB_URL,SB_KEY),app=document.getElementById('app');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ok=r=>{if(r.error){toast(r.error.message);throw r.error}return r.data};
+const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(window._t);window._t=setTimeout(()=>t.style.display='none',2600)};
+const rid=()=>Math.random().toString(36).slice(2,8);
+const ST=['draft','published'],SL={draft:'مسودة',published:'منشور'};
+const COMMON=[['title','العنوان *','text'],['slug','الرابط المستقل (slug) — يُولَّد تلقائيًا إن تُرك فارغًا','text']];
+const F={
+ events:{n:'الفعاليات',f:[...COMMON,['event_date','التاريخ','date'],['category','التصنيف','text'],['excerpt','المقتطف','ta'],['cover_url','الصورة الرئيسية','img'],['body','النص','ta'],['blocks','عناصر الإخراج (JSON): text / cutout / wide / quote / gallery','json']]},
+ news:{n:'الأخبار',f:[...COMMON,['news_date','التاريخ','date'],['category','التصنيف','text'],['excerpt','المقتطف','ta'],['cover_url','الصورة','img'],['body','النص','ta']]},
+ articles:{n:'المقالات',f:[...COMMON,['author','الكاتب','text'],['reviewer','المدقق','text'],['excerpt','المقتطف','ta'],['cover_url','صورة المقالة','img'],['file_url','ملف المقال (PDF)','file'],['body','نص المقالة','ta']]},
+ library_items:{n:'المكتبة',f:[...COMMON,['category','التصنيف','text'],['year','السنة','number'],['description','الوصف','ta'],['cover_url','الغلاف','img'],['file_url','الملف','file']]},
+ reports:{n:'التقارير',f:[...COMMON,['year','السنة','number'],['description','الوصف','ta'],['highlights','أبرز الأرقام (JSON): [{"label":"","value":""}]','json'],['contents','أبرز ما يتضمنه (JSON): ["",""]','json'],['cover_url','الغلاف','img'],['file_url','ملف PDF','file']]}
+};
+Object.values(F).forEach(x=>x.f.push(['attachments','المرفقات: صور وروابط وملفات ونصوص','att']));F.events.f.splice(2,0,['location','المكان','text']);
+const TABS=[...Object.keys(F),'structure','requests','site'],TN={...Object.fromEntries(Object.entries(F).map(([k,v])=>[k,v.n])),structure:'الهيكلة والأعضاء',requests:'طلبات الانضمام',site:'نصوص الموقع'};
+let tab='events';
+
+async function boot(){const {data}=await db.auth.getSession();data.session?shell():login()}
+function login(){app.innerHTML=`<h2>دخول الإدارة</h2><form id="lf"><label>البريد<input name="e" type="email" required></label><label>كلمة المرور<input name="p" type="password" required></label><button class="p">دخول</button></form>`;
+ document.getElementById('lf').onsubmit=async e=>{e.preventDefault();const f=e.target,r=await db.auth.signInWithPassword({email:f.e.value,password:f.p.value});r.error?toast('بيانات الدخول غير صحيحة'):shell()}}
+function shell(){app.innerHTML=`<div class="bar">${TABS.map(t=>`<button data-t="${t}" class="${t==tab?'on':''}">${TN[t]}</button>`).join('')}<button class="d" id="out" style="margin-inline-start:auto">خروج</button></div><div id="v"></div>`;
+ app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;shell()});document.getElementById('out').onclick=async()=>{await db.auth.signOut();login()};
+ ({structure,requests,site}[tab]||list)()}
+
+/* ---- قوائم المحتوى ---- */
+async function list(){const v=document.getElementById('v'),rows=await db.from(tab).select('id,title,status,slug').order('created_at',{ascending:false}).then(ok);
+ v.innerHTML=`<h2>${TN[tab]}</h2><button class="p" id="new">إضافة</button>${rows.map(r=>`<div class="row"><span>${esc(r.title)} <span class="tag ${r.status=='published'?'pub':''}">${SL[r.status]}</span></span><span><button data-a="edit" data-id="${r.id}">تعديل</button> <button data-a="tog" data-id="${r.id}" data-s="${r.status}">${r.status=='published'?'إلغاء النشر':'نشر'}</button> <button class="d" data-a="del" data-id="${r.id}">حذف</button></span></div>`).join('')||'<p><small>لا سجلات بعد.</small></p>'}`;
+ document.getElementById('new').onclick=()=>formView({});
+ v.querySelectorAll('[data-a]').forEach(b=>b.onclick=async()=>{const id=b.dataset.id,a=b.dataset.a;
+  if(a=='edit')formView((await db.from(tab).select('*').eq('id',id).single().then(ok)));
+  if(a=='tog'){await db.from(tab).update({status:b.dataset.s=='published'?'draft':'published'}).eq('id',id).then(ok);list()}
+  if(a=='del'&&confirm('حذف نهائي؟')){await db.from(tab).delete().eq('id',id).then(ok);list()}})}
+function formView(r){const v=document.getElementById('v'),fs=F[tab].f;
+ v.innerHTML=`<h2>${r.id?'تعديل':'إضافة'} — ${TN[tab]}</h2><form id="ff">${fs.map(([k,l,t])=>`<label>${l}${
+  t=='ta'?`<textarea name="${k}" rows="${k=='body'?12:3}">${esc(r[k])}</textarea>`:
+  t=='att'?`<div class="att"></div><button type="button" id="addat">+ إضافة مرفق (رابط / ملف / صورة / نص)</button>`:
+  t=='json'?`<textarea name="${k}" rows="7" dir="ltr">${esc(JSON.stringify(r[k]??(k=='blocks'||k=='highlights'||k=='contents'?[]:null),null,1))}</textarea>`:
+  (t=='img'||t=='file')?`<input name="${k}" value="${esc(r[k])}" dir="ltr" placeholder="رابط الملف"><input type="file" data-k="${k}" data-b="${t=='img'?'media':'files'}" accept="${t=='img'?'image/*':'.pdf'}">`:
+  `<input name="${k}" type="${t}" value="${esc(r[k])}">`}</label>`).join('')}
+  <label>الحالة<select name="status">${ST.map(s=>`<option value="${s}" ${(r.status||'draft')==s?'selected':''}>${SL[s]}</option>`).join('')}</select></label>
+  <div><button class="p">حفظ</button> <button type="button" id="cx">إلغاء</button></div></form>`;
+ document.getElementById('cx').onclick=list;
+ let AT=Array.isArray(r.attachments)?r.attachments.map(x=>({...x})):[];
+ const drawAT=()=>{const c=v.querySelector('.att');if(!c)return;c.innerHTML=AT.map((x,i)=>`<div class="mini" style="grid-template-columns:100px 1fr 1.4fr auto"><select data-i="${i}" data-f="type">${[['link','رابط'],['file','ملف'],['image','صورة'],['text','نص']].map(([k,l])=>`<option value="${k}" ${x.type==k?'selected':''}>${l}</option>`).join('')}</select><input data-i="${i}" data-f="label" placeholder="العنوان" value="${esc(x.label)}"><span><input data-i="${i}" data-f="value" placeholder="الرابط أو النص" value="${esc(x.value)}">${x.type=='file'||x.type=='image'?`<input type="file" data-up="${i}">`:''}</span><button type="button" class="d" data-rm="${i}">حذف</button></div>`).join('');
+  c.querySelectorAll('[data-f]').forEach(z=>z.onchange=()=>{AT[z.dataset.i][z.dataset.f]=z.value;if(z.dataset.f=='type')drawAT()});
+  c.querySelectorAll('[data-rm]').forEach(z=>z.onclick=()=>{AT.splice(z.dataset.rm,1);drawAT()});
+  c.querySelectorAll('[data-up]').forEach(z=>z.onchange=async()=>{const f=z.files[0],x=AT[z.dataset.up],b=x.type=='image'?'media':'files',p=`${Date.now()}-${rid()}.${f.name.split('.').pop().toLowerCase()}`;await db.storage.from(b).upload(p,f).then(ok);x.value=db.storage.from(b).getPublicUrl(p).data.publicUrl;drawAT();toast('تم الرفع')})};
+ drawAT();document.getElementById('addat').onclick=()=>{AT.push({type:'link',label:'',value:''});drawAT()};
+ v.querySelectorAll('input[type=file][data-k]').forEach(i=>i.onchange=async()=>{const f=i.files[0];if(!f)return;const p=`${Date.now()}-${rid()}.${f.name.split('.').pop().toLowerCase()}`;
+  await db.storage.from(i.dataset.b).upload(p,f,{contentType:f.type}).then(ok);i.previousElementSibling.value=db.storage.from(i.dataset.b).getPublicUrl(p).data.publicUrl;toast('تم الرفع')});
+ document.getElementById('ff').onsubmit=async e=>{e.preventDefault();const o={};
+  try{for(const [k,,t] of fs){if(t=='att'){o[k]=AT.filter(x=>x.value);continue}const val=e.target[k].value;o[k]=t=='json'?JSON.parse(val||'[]'):t=='number'?(val?+val:null):(val===''?null:val)}}catch(x){return toast('صيغة JSON غير صحيحة')}
+  o.status=e.target.status.value;if(!o.slug)o.slug=rid();if(!o.title)return toast('العنوان مطلوب');
+  r.id?await db.from(tab).update(o).eq('id',r.id).then(ok):await db.from(tab).insert(o).then(ok);toast('تم الحفظ');list()}}
+
+/* ---- الهيكلة والأعضاء ---- */
+let Y=null,S='students';
+async function structure(){const v=document.getElementById('v'),yrs=(await db.from('club_years').select('year').order('year',{ascending:false}).then(ok)).map(x=>x.year);Y=Y||yrs[0];
+ const U=await db.from('structure_units').select('*').eq('year',Y).eq('section',S).order('sort').then(ok),
+ A=U.length?await db.from('assignments').select('id,unit_id,role_title,sort,members(id,full_name,photo_url)').in('unit_id',U.map(u=>u.id)).order('sort').then(ok):[];
+ const tree=p=>U.filter(u=>u.parent_id==p).map(u=>`<div class="node"><h4>${esc(u.title)} <small>${esc(u.kind)}</small> <button class="d" data-du="${u.id}">حذف الوحدة</button></h4>
+  ${A.filter(a=>a.unit_id==u.id).map(a=>`<div class="row"><span>${esc(a.members?.full_name)} — <small>${esc(a.role_title)}</small></span><span><button data-ph="${a.members?.id}">صورة</button> <button class="d" data-da="${a.id}">إزالة</button></span></div>`).join('')}
+  <div class="mini"><input placeholder="الاسم (كما هو)" data-n="${u.id}"><input placeholder="الدور / المسمى" data-r="${u.id}"><button data-add="${u.id}">إضافة</button></div>${tree(u.id)}</div>`).join('');
+ v.innerHTML=`<h2>الهيكلة والأعضاء</h2><div class="bar" style="position:static"><select id="sy" style="width:auto">${yrs.map(y=>`<option ${y==Y?'selected':''}>${y}</option>`).join('')}</select><select id="ss" style="width:auto"><option value="students" ${S=='students'?'selected':''}>قسم الطلاب</option><option value="female_students" ${S=='female_students'?'selected':''}>قسم الطالبات</option></select><button id="ay">إضافة سنة</button></div>
+ <div class="box"><b>إضافة وحدة (لجنة / قيادة / قسم ...)</b><div class="mini" style="grid-template-columns:1fr 1fr 1fr auto"><input id="ut" placeholder="اسم الوحدة"><input id="uk" placeholder="النوع (مثل: لجنة)"><select id="up"><option value="">بلا أب (مستوى أعلى)</option>${U.map(u=>`<option value="${u.id}">${esc(u.title)}</option>`).join('')}</select><button class="p" id="au">إضافة</button></div></div>${tree(null)||'<p><small>لا وحدات لهذه السنة والشطر بعد.</small></p>'}`;
+ sy.onchange=()=>{Y=+sy.value;structure()};ss.onchange=()=>{S=ss.value;structure()};
+ ay.onclick=async()=>{const y=+prompt('السنة الهجرية (مثل 1449)');if(y){await db.from('club_years').insert({year:y}).then(ok);Y=y;structure()}};
+ au.onclick=async()=>{if(!ut.value.trim())return;await db.from('structure_units').insert({year:Y,section:S,title:ut.value,kind:uk.value||null,parent_id:up.value||null,sort:U.length}).then(ok);structure()};
+ v.querySelectorAll('[data-du]').forEach(b=>b.onclick=async()=>{if(confirm('حذف الوحدة وما تحتها؟')){await db.from('structure_units').delete().eq('id',b.dataset.du).then(ok);structure()}});
+ v.querySelectorAll('[data-da]').forEach(b=>b.onclick=async()=>{await db.from('assignments').delete().eq('id',b.dataset.da).then(ok);structure()});
+ v.querySelectorAll('[data-add]').forEach(b=>b.onclick=async()=>{const id=b.dataset.add,n=v.querySelector(`[data-n="${id}"]`).value,ro=v.querySelector(`[data-r="${id}"]`).value;if(!n||!ro)return toast('الاسم والدور مطلوبان');
+  let m=(await db.from('members').select('id').eq('full_name',n).eq('section',S).limit(1).then(ok))[0];if(!m)m=(await db.from('members').insert({full_name:n,section:S}).select('id').single().then(ok));
+  await db.from('assignments').insert({unit_id:id,member_id:m.id,role_title:ro,sort:A.filter(a=>a.unit_id==id).length}).then(ok);structure()});
+ v.querySelectorAll('[data-ph]').forEach(b=>b.onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=async()=>{const f=i.files[0],p=`${Date.now()}-${rid()}.${f.name.split('.').pop().toLowerCase()}`;await db.storage.from('media').upload(p,f).then(ok);await db.from('members').update({photo_url:db.storage.from('media').getPublicUrl(p).data.publicUrl}).eq('id',b.dataset.ph).then(ok);toast('تم رفع الصورة')};i.click()})}
+
+/* ---- طلبات الانضمام ---- */
+async function requests(){const v=document.getElementById('v'),R=await db.from('join_requests').select('*').order('created_at',{ascending:false}).then(ok),SS={new:'جديد',reviewed:'قيد المراجعة',accepted:'مقبول',declined:'مرفوض'};
+ v.innerHTML=`<h2>طلبات الانضمام (${R.length})</h2>${R.map(r=>`<div class="box"><b>${esc(r.full_name)}</b><small>${esc(r.university_id)} · ${esc(r.university_email)} · ${esc(r.phone)} · ${esc(r.college)} · ${esc(r.committee)}</small><div style="white-space:pre-wrap">${esc(r.reason)}</div>${r.experience?`<div style="white-space:pre-wrap"><small>الخبرات:</small> ${esc(r.experience)}</div>`:''}${r.linkedin?`<a href="${esc(r.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`:''}${r.cv_path?`<button data-cv="${esc(r.cv_path)}">فتح السيرة الذاتية</button>`:''}<select data-st="${r.id}">${Object.entries(SS).map(([k,l])=>`<option value="${k}" ${r.status==k?'selected':''}>${l}</option>`).join('')}</select></div>`).join('')}`;
+ v.querySelectorAll('[data-st]').forEach(s=>s.onchange=async()=>{await db.from('join_requests').update({status:s.value}).eq('id',s.dataset.st).then(ok);toast('تم التحديث')});
+ v.querySelectorAll('[data-cv]').forEach(b=>b.onclick=async()=>{const r=await db.storage.from('cvs').createSignedUrl(b.dataset.cv,300);r.error?toast(r.error.message):open(r.data.signedUrl,'_blank','noopener')})}
+
+/* ---- نصوص الموقع ---- */
+async function site(){const v=document.getElementById('v'),K=[['hero_intro','تعريف الصفحة الرئيسية'],['about','نبذة عن النادي'],['vision','الرؤية'],['mission','الرسالة'],['goals','الأهداف']],d=Object.fromEntries((await db.from('site_content').select('*').then(ok)).map(r=>[r.key,r.value]));
+ v.innerHTML=`<h2>نصوص الموقع</h2><form id="sf">${K.map(([k,l])=>`<label>${l}<textarea name="${k}" rows="4">${esc(d[k])}</textarea></label>`).join('')}<button class="p">حفظ</button></form>`;
+ sf.onsubmit=async e=>{e.preventDefault();for(const [k] of K){const val=e.target[k].value;val?await db.from('site_content').upsert({key:k,value:val}).then(ok):await db.from('site_content').delete().eq('key',k).then(ok)}toast('تم الحفظ')}}
+boot();
+</script>
+<script>window.addEventListener('error',e=>{var t=document.getElementById('toast');if(t&&e.message&&!/Supabase keys/.test(e.message)){t.textContent='خطأ: '+e.message;t.classList.add('on');t.style.display='block'}})</script></body>
+</html>
