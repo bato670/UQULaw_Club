@@ -24,7 +24,7 @@ form,.box{border:1px solid var(--line);border-radius:14px;padding:16px;display:g
 <div class="wrap" id="app"></div><div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-const SB_URL='YOUR_SUPABASE_URL', SB_KEY='YOUR_SUPABASE_ANON_KEY';
+const SB_URL='https://dsinztikwvuqhhwrhisg.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzaW56dGlrd3Z1cWhod3JoaXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NTQ2MDcsImV4cCI6MjEwNjQzMDYwN30.MhBz5vD_s4u87y6c0tz1LgPtx18sjuEir0tju0f-ieQ';
 const db=supabase.createClient(SB_URL,SB_KEY),app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ok=r=>{if(r.error){toast(r.error.message);throw r.error}return r.data};
