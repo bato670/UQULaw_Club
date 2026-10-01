@@ -83,7 +83,7 @@ footer{background:#083B3A;color:#cfe0dc;border-top:3px solid var(--gold);padding
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
 <script>
 /* ===== الإعداد: ضعي بيانات مشروع Supabase (المفتاح العام anon فقط) ===== */
-const SB_URL='YOUR_SUPABASE_URL', SB_KEY='YOUR_SUPABASE_ANON_KEY';
+const SB_URL='https://dsinztikwvuqhhwrhisg.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzaW56dGlrd3Z1cWhod3JoaXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NTQ2MDcsImV4cCI6MjEwNjQzMDYwN30.MhBz5vD_s4u87y6c0tz1LgPtx18sjuEir0tju0f-ieQ';
 /* صورتا العضو البديلتان: ارفعيهما إلى bucket اسمه media وضعي رابطيهما هنا */
 const AVATAR={students:'',female_students:''};
 if(/YOUR_SUPABASE/.test(SB_URL+SB_KEY)){document.getElementById('app').innerHTML='<div style="padding:48px 20px;text-align:center;direction:rtl;font-family:sans-serif"><h2>⚠️ لم يتم ربط Supabase بعد</h2><p>ضعي Project URL و anon key في أول السكربت (السطر الذي يبدأ بـ SB_URL).</p></div>';throw new Error('Supabase keys not set')}
