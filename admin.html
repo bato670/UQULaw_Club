@@ -25,6 +25,15 @@ form,.box{border:1px solid var(--line);border-radius:14px;padding:16px;display:g
 .admin-user-info{min-width:0;flex:1;display:flex;flex-direction:column}.admin-user-info b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.admin-user-info small{font-size:12px;color:rgba(255,255,255,.7)}
 .admin-out-ico{flex:none;width:36px;height:36px;padding:0;border-radius:10px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);font-size:18px;cursor:pointer}
 .mob-user{color:#56706E;font-weight:700}
+
+.staff-card summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.staff-card summary::-webkit-details-marker{display:none}
+#addbox>summary{cursor:pointer;list-style:none}#addbox>summary::-webkit-details-marker{display:none}
+.admin-avatar.sm{width:34px;height:34px;font-size:14px}
+.sc-main{flex:1;min-width:0;display:flex;flex-direction:column}.sc-main small{color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-body{display:grid;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.sc-sec{display:grid;gap:8px}
+.sc-pw{display:flex;gap:6px;flex-wrap:wrap}.sc-pw input{flex:1;min-width:180px}
+.staff-tools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.staff-tools input,.staff-tools select{flex:1;min-width:140px}
 </style>
 <style id="design-v2">
 /* ===== design-v2 (لوحة الإدارة) : طبقة تصميم فقط ===== */
@@ -153,7 +162,7 @@ const TP={homeSettings:'site',statsSettings:'site',site:'site',footer:'site',mem
 let ME={role:null,perms:[]},HRERR='';
 const can=t=>t=='overview'||(t=='hr'?HR:t=='staff'?(ME.role=='owner'||ME.perms.includes('manage_staff')):(ME.role=='owner'||ME.perms.includes('full')||ME.perms.includes(TP[t]||t)));
 const vis=()=>[...TABS.filter(can),...(HR?['hr']:[]),...(can('staff')?['staff']:[])];
-async function chkHR(){try{const {data:{user}}=await db.auth.getUser();if(!user){HRERR='لا توجد جلسة دخول';HR=false;return}const r=await db.from('staff_roles').select('role,permissions,is_active,full_name').eq('user_id',user.id).maybeSingle();const d=r.data;if(r.error)console.error('[staff_roles]',r.error);HRERR=r.error?('خطأ قراءة staff_roles: '+r.error.message+(r.error.code?' ['+r.error.code+']':'')):!d?('لا يوجد سجل في staff_roles للمستخدم '+user.id+' (تأكد أن user_id يطابق id الحساب في Authentication)'):d.is_active===false?'الحساب موقوف (is_active=false)':'';if(r.error||!d||d.is_active===false){ME={role:null,perms:[]};HR=false;return}ME={role:d.role,perms:Array.isArray(d.permissions)?d.permissions:[],name:d.full_name,email:user.email};HR=d.role=='owner'||d.role=='hr_head'||ME.perms.includes('hr')||ME.perms.includes('full')}catch(e){console.error('[hr]',e);HRERR='استثناء: '+(e.message||e);HR=false}}
+async function chkHR(){try{const {data:{user}}=await db.auth.getUser();if(!user){HRERR='لا توجد جلسة دخول';HR=false;return}const r=await db.from('staff_roles').select('role,permissions,is_active,full_name').eq('user_id',user.id).maybeSingle();const d=r.data;if(r.error)console.error('[staff_roles]',r.error);HRERR=r.error?('خطأ قراءة staff_roles: '+r.error.message+(r.error.code?' ['+r.error.code+']':'')):!d?('لا يوجد سجل في staff_roles للمستخدم '+user.id+' (تأكد أن user_id يطابق id الحساب في Authentication)'):d.is_active===false?'الحساب موقوف (is_active=false)':'';if(r.error||!d||d.is_active===false){ME={role:null,perms:[]};HR=false;return}ME={role:d.role,perms:Array.isArray(d.permissions)?d.permissions:[],name:d.full_name,email:user.email,uid:user.id};HR=d.role=='owner'||d.role=='hr_head'||ME.perms.includes('hr')||ME.perms.includes('full')}catch(e){console.error('[hr]',e);HRERR='استثناء: '+(e.message||e);HR=false}}
 
 
 
@@ -191,6 +200,14 @@ async function callStaff(b){
    const r=await db.rpc('staff_update',{p_user:b.user_id,p_perms:b.permissions??null,p_active:b.is_active??null});
    if(r.error)throw r.error;return {ok:true}
   }
+  if(b.action=='profile'){
+   const r=await db.rpc('staff_update_profile',{p_user:b.user_id,p_name:b.full_name||'',p_role:b.role,p_committee:b.committee||'',p_role_title:b.role_title||''});
+   if(r.error)throw r.error;return {ok:true}
+  }
+  if(b.action=='setpw'){
+   const r=await db.rpc('staff_set_password',{p_user:b.user_id,p_password:b.password});
+   if(r.error)throw r.error;return {ok:true}
+  }
   if(b.action=='reset'){
    const pw=genPw(),r=await db.rpc('staff_set_password',{p_user:b.user_id,p_password:pw});
    if(r.error)throw r.error;return {temp_password:pw}
@@ -202,20 +219,55 @@ async function callStaff(b){
 }
 const pbox=(sel=[],only)=>Object.entries(PERMS).filter(([k])=>(!only||only.includes(k))&&!['manage_staff','full'].includes(k)||ME.role=='owner').map(([k,n])=>`<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" style="width:auto" name="perm" value="${k}" ${sel.includes(k)?'checked':''}>${n}</label>`).join('');
 const getPerms=el=>[...el.querySelectorAll('input[name=perm]:checked')].map(i=>i.value);
-function pwdBox(email,pw){const v=document.getElementById('v');const d=document.createElement('div');d.className='box';d.innerHTML=`<h4>تم إنشاء الحساب</h4><p>لا يُرسل بريد تلقائيًا. انسخ كلمة المرور المؤقتة وشاركها مع صاحب الحساب (${esc(email)}) يدويًا؛ لن تظهر مرة أخرى.</p><input readonly dir="ltr" value="${esc(pw)}" style="font-family:monospace"><button class="p" id="cp">نسخ</button><button id="okp">تم</button>`;v.prepend(d);d.querySelector('#cp').onclick=()=>{navigator.clipboard?.writeText(pw);toast('تم النسخ')};d.querySelector('#okp').onclick=()=>d.remove()}
-async function staffAdmin(){const v=document.getElementById('v');const r=await db.from('staff_roles').select('user_id,role,permissions,is_active,full_name,email,committee,role_title');if(r.error){console.error(r.error);v.innerHTML='<div class="box"><b>تعذّر تحميل حسابات الإدارة</b><p dir="ltr">'+esc(r.error.message)+'</p><small>نفّذ ملف supabase_fix_admin.sql ثم أعد المحاولة.</small></div>';return}
- const L=r.data||[],isP=ME.role=='owner';
- v.innerHTML=`<h2>حسابات الإدارة والصلاحيات</h2><button type="button" id="ntall">إرسال تنبيه لكل الإدارة</button><form id="nf"><h4>إنشاء حساب جديد</h4><label>الاسم *<input name="n" required></label><label>البريد الإلكتروني *<input name="e" type="email" required dir="ltr"></label><label>الدور<select name="r"><option value="staff">إداري</option><option value="committee_head">رئيس لجنة</option><option value="hr_head">رئيس الموارد البشرية</option>${isP?'<option value="president">رئيس النادي</option>':''}</select></label><label>اللجنة (اختياري)<input name="c"></label><div><b>الصلاحيات (اختر ما يُسمح به فقط)</b> <button type="button" id="dfp">الافتراضي للدور</button>${pbox()}</div><button class="p">إنشاء الحساب</button></form><div id="sl">${L.map(x=>`<div class="box" data-u="${x.user_id}"><b>${esc(x.full_name||'—')}</b> <small dir="ltr">${esc(x.email||'')}</small> <small>${esc(x.committee||'')}</small> <span class="tag ${x.is_active===false?'':'pub'}">${x.is_active===false?'موقوف':esc(x.role_title||ROLEN[x.role]||x.role)}</span>${x.role=='owner'||(!isP&&x.role=='president')?`<small>${x.role=='owner'?'مدير المنصة: كل الصلاحيات':'رئيس النادي: تُدار صلاحياته من مدير المنصة'}</small>`:`<div>${pbox(x.permissions||[])}</div><div class="record-actions"><button class="p" data-sv>حفظ الصلاحيات</button><button data-rs>كلمة مرور جديدة</button><button class="d" data-tg>${x.is_active===false?'تفعيل':'إيقاف'}</button><button data-nt>إرسال تنبيه</button><button class="d" data-del>حذف الحساب</button></div>`}</div>`).join('')}</div>`;
- document.getElementById('nf').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('button:not([type=button])');if(b?.disabled)return;if(b)b.disabled=true;try{const email=f.e.value.trim(),d=await callStaff({action:'create',full_name:f.n.value.trim(),email,role:f.r.value,committee:f.c.value.trim(),permissions:getPerms(f)});toast(d.existing?'البريد مسجّل مسبقًا: تم ربطه بالدور والصلاحيات':'تم إنشاء الحساب');await staffAdmin();if(d.temp_password)pwdBox(d.email||email,d.temp_password)}catch(err){console.error(err)}finally{if(b)b.disabled=false}};
+function pwdBox(email,pw,title){const v=document.getElementById('v');const d=document.createElement('div');d.className='box';d.innerHTML=`<h4>${esc(title||'تم إنشاء الحساب')}</h4><p>لا يُرسل بريد تلقائيًا. انسخ كلمة المرور المؤقتة وشاركها مع صاحب الحساب (${esc(email)}) يدويًا؛ لن تظهر مرة أخرى.</p><input readonly dir="ltr" value="${esc(pw)}" style="font-family:monospace"><button class="p" id="cp">نسخ</button><button id="okp">تم</button>`;v.prepend(d);d.querySelector('#cp').onclick=()=>{navigator.clipboard?.writeText(pw);toast('تم النسخ')};d.querySelector('#okp').onclick=()=>d.remove()}
+let STOPEN=null;
+async function staffAdmin(){const v=document.getElementById('v');
+ const r=await db.from('staff_roles').select('user_id,role,permissions,is_active,full_name,email,committee,role_title');
+ if(r.error){console.error(r.error);v.innerHTML='<div class="box"><b>تعذّر تحميل حسابات الإدارة</b><p dir="ltr">'+esc(r.error.message)+'</p></div>';return}
+ const isP=ME.role=='owner',RO=['owner','president','committee_head','hr_head','staff'];
+ const L=(r.data||[]).slice().sort((a,b)=>RO.indexOf(a.role)-RO.indexOf(b.role)||(a.full_name||'').localeCompare(b.full_name||'','ar'));
+ const act=L.filter(x=>x.is_active!==false).length;
+ const dflt=k=>k=='president'?Object.keys(PERMS).filter(p=>!['manage_staff','full'].includes(p)):(DEF[k]||[]);
+ const roleSel=(sel,name)=>`<select name="${name}">${['staff','committee_head','hr_head',...(isP?['president']:[])].map(k=>`<option value="${k}" ${sel==k?'selected':''}>${ROLEN[k]}</option>`).join('')}</select>`;
+ const locked=x=>x.role=='owner'?x.user_id!=ME.uid:(!isP&&(x.role=='president'||(x.permissions||[]).some(p=>p=='manage_staff'||p=='full')));
+ const card=x=>{const own=x.role=='owner',lk=locked(x),off=x.is_active===false,dis=lk?'disabled':'';
+  return `<details class="box staff-card" data-u="${x.user_id}" data-r="${x.role}" data-q="${esc(((x.full_name||'')+' '+(x.email||'')+' '+(x.committee||'')+' '+(ROLEN[x.role]||'')).toLowerCase())}" ${STOPEN==x.user_id?'open':''}>
+  <summary><span class="admin-avatar sm">${esc((x.full_name||x.email||'?').trim().charAt(0))}</span><span class="sc-main"><b>${esc(x.full_name||'—')}</b><small dir="ltr">${esc(x.email||'')}</small></span><span class="tag ${off?'':'pub'}">${off?'موقوف':esc(x.role_title||ROLEN[x.role]||x.role)}</span></summary>
+  <div class="sc-body">
+   <div class="sc-grid">
+    <label>الاسم<input name="fn" value="${esc(x.full_name)}" ${dis}></label>
+    <label>اللجنة<input name="cm" value="${esc(x.committee)}" ${dis}></label>
+    <label>المسمى الظاهر<input name="rt" value="${esc(x.role_title)}" placeholder="${esc(ROLEN[x.role]||'')}" ${dis}></label>
+    <label>الدور${own||lk?`<input value="${esc(ROLEN[x.role]||x.role)}" disabled>`:roleSel(x.role,'rl')}</label>
+    <label>البريد الإلكتروني<input value="${esc(x.email)}" dir="ltr" disabled></label>
+   </div>
+   ${lk?'':`<div class="record-actions"><button class="p" data-pf>حفظ البيانات</button></div>
+   <div class="sc-sec"><b>كلمة المرور</b><div class="sc-pw"><input name="np" type="text" dir="ltr" autocomplete="off" placeholder="كلمة مرور جديدة (8 أحرف على الأقل)"><button class="p" data-setpw>تعيين</button><button data-rs>توليد عشوائية</button></div><small class="hint">لا تُرسل بالبريد؛ شاركها مع صاحب الحساب يدويًا.</small></div>`}
+   ${own?'<small class="hint">مدير المنصة: كل الصلاحيات، ولا يمكن إيقاف الحساب أو حذفه.</small>':lk?'<small class="hint">هذا الحساب يُدار من مدير المنصة فقط.</small>':`<div class="sc-sec"><b>الصلاحيات</b><div>${pbox(x.permissions||[])}</div><div class="record-actions"><button class="p" data-sv>حفظ الصلاحيات</button><button data-dp>الافتراضي للدور</button></div></div>
+   <div class="record-actions"><button class="d" data-tg>${off?'تفعيل الحساب':'إيقاف الحساب'}</button><button data-nt>إرسال تنبيه</button><button class="d" data-del>حذف الحساب</button></div>`}
+  </div></details>`};
+ v.innerHTML=`<h2>حسابات الإدارة والصلاحيات</h2>
+ <p class="hint">${L.length} حساب · ${act} نشط · ${L.length-act} موقوف</p>
+ <div class="staff-tools"><input id="sq" placeholder="ابحث بالاسم أو البريد أو اللجنة…"><select id="sf"><option value="">كل الأدوار</option>${RO.map(k=>`<option value="${k}">${ROLEN[k]}</option>`).join('')}</select><button type="button" id="ntall">تنبيه لكل الإدارة</button></div>
+ <details class="box" id="addbox"><summary><b>+ إضافة إداري جديد</b></summary><form id="nf"><label>الاسم *<input name="n" required></label><label>البريد الإلكتروني *<input name="e" type="email" required dir="ltr"></label><label>الدور${roleSel('staff','r')}</label><label>اللجنة (اختياري)<input name="c"></label><div><b>الصلاحيات (اختر ما يُسمح به فقط)</b> <button type="button" id="dfp">الافتراضي للدور</button>${pbox()}</div><button class="p">إنشاء الحساب</button></form></details>
+ <div id="sl">${L.map(card).join('')||'<p class="hint">لا توجد حسابات.</p>'}</div>`;
+ const filt=()=>{const q=document.getElementById('sq').value.trim().toLowerCase(),f=document.getElementById('sf').value;v.querySelectorAll('.staff-card').forEach(c=>c.style.display=(!q||c.dataset.q.includes(q))&&(!f||c.dataset.r==f)?'':'none')};
+ document.getElementById('sq').oninput=filt;document.getElementById('sf').onchange=filt;
+ document.getElementById('nf').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('button:not([type=button])');if(b?.disabled)return;if(b)b.disabled=true;try{const email=f.e.value.trim(),d=await callStaff({action:'create',full_name:f.n.value.trim(),email,role:f.r.value,committee:f.c.value.trim(),permissions:getPerms(f)});toast(d.existing?'البريد مسجّل مسبقًا: تم ربطه بالدور والصلاحيات':'تم إنشاء الحساب');await staffAdmin();if(d.temp_password)pwdBox(d.email||email,d.temp_password,'تم إنشاء الحساب')}catch(err){console.error(err)}finally{if(b)b.disabled=false}};
+ document.getElementById('dfp').onclick=()=>{const f=document.getElementById('nf'),d=dflt(f.r.value);f.querySelectorAll('input[name=perm]').forEach(i=>i.checked=d.includes(i.value))};
  document.getElementById('ntall').onclick=async()=>{const ti=prompt('عنوان التنبيه لكل الإدارة');if(!ti)return;const bo=prompt('نص التنبيه (اختياري)')||'';try{const d=await callStaff({action:'notify',title:ti,body:bo});toast('تم الإرسال إلى '+d.sent+' حساب')}catch(_){}};
- document.getElementById('dfp').onclick=()=>{const f=document.getElementById('nf'),d=DEF[f.r.value]||[];f.querySelectorAll('input[name=perm]').forEach(i=>i.checked=d.includes(i.value))};
- v.querySelectorAll('[data-u]').forEach(c=>{const u=c.dataset.u,x=L.find(y=>y.user_id==u),run=async(b,p,m)=>{if(c.dataset.busy)return;c.dataset.busy=1;try{await callStaff({action:b,user_id:u,...p});toast(m);staffAdmin()}catch(_){}finally{delete c.dataset.busy}};
-  c.querySelector('[data-sv]')?.addEventListener('click',()=>run('update',{permissions:getPerms(c)},'تم حفظ الصلاحيات'));
-  c.querySelector('[data-tg]')?.addEventListener('click',()=>run('update',{is_active:x.is_active===false},'تم التحديث'));
-  c.querySelector('[data-del]')?.addEventListener('click',()=>{if(confirm('حذف حساب «'+(x.full_name||x.email)+'»؟ ستُزال كل صلاحياته ولا يمكن التراجع.'))run('delete',{},'تم حذف الحساب')});
-  c.querySelector('[data-nt]')?.addEventListener('click',async()=>{const ti=prompt('عنوان التنبيه');if(!ti)return;const bo=prompt('نص التنبيه (اختياري)')||'';try{await callStaff({action:'notify',user_id:u,title:ti,body:bo});toast('تم إرسال التنبيه')}catch(_){}});
-  c.querySelector('[data-rs]')?.addEventListener('click',async()=>{try{const d=await callStaff({action:'reset',user_id:u});pwdBox(x.email||'',d.temp_password)}catch(_){}})})}
-
+ v.querySelectorAll('.staff-card').forEach(c=>{const u=c.dataset.u,x=L.find(y=>y.user_id==u),q=s=>c.querySelector(s),
+  run=async(b,p,m)=>{if(c.dataset.busy)return false;c.dataset.busy=1;try{const d=await callStaff({action:b,user_id:u,...p});toast(m);return d||true}catch(_){return false}finally{delete c.dataset.busy}},
+  again=()=>{STOPEN=u;return staffAdmin()};
+  q('[data-pf]')?.addEventListener('click',async()=>{if(await run('profile',{full_name:q('[name=fn]').value.trim(),committee:q('[name=cm]').value.trim(),role_title:q('[name=rt]').value.trim(),role:q('[name=rl]')?.value||x.role},'تم حفظ البيانات'))again()});
+  q('[data-setpw]')?.addEventListener('click',async()=>{const i=q('[name=np]'),pw=i.value.trim();if(pw.length<8){toast('كلمة المرور 8 أحرف على الأقل');return}if(await run('setpw',{password:pw},'تم تعيين كلمة المرور')){i.value=''}});
+  q('[data-rs]')?.addEventListener('click',async()=>{const d=await run('reset',{},'تم توليد كلمة مرور جديدة');if(d&&d.temp_password)pwdBox(x.email||'',d.temp_password,'كلمة المرور الجديدة')});
+  q('[data-sv]')?.addEventListener('click',async()=>{if(await run('update',{permissions:getPerms(c)},'تم حفظ الصلاحيات'))again()});
+  q('[data-dp]')?.addEventListener('click',()=>{const d=dflt(q('[name=rl]')?.value||x.role);c.querySelectorAll('input[name=perm]').forEach(i=>i.checked=d.includes(i.value))});
+  q('[data-tg]')?.addEventListener('click',async()=>{if(await run('update',{is_active:x.is_active===false},'تم التحديث'))again()});
+  q('[data-del]')?.addEventListener('click',async()=>{if(confirm('حذف حساب «'+(x.full_name||x.email)+'»؟ ستُزال كل صلاحياته ولا يمكن التراجع.')){if(await run('delete',{},'تم حذف الحساب')){STOPEN=null;staffAdmin()}}});
+  q('[data-nt]')?.addEventListener('click',async()=>{const ti=prompt('عنوان التنبيه');if(!ti)return;const bo=prompt('نص التنبيه (اختياري)')||'';try{await callStaff({action:'notify',user_id:u,title:ti,body:bo});toast('تم إرسال التنبيه')}catch(_){}});
+ })}
 
 let EXF='';
 let EXS={sec:'',ev:'',q:'',from:'',to:'',sort:'new'};
