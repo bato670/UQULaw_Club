@@ -552,7 +552,7 @@ input,select,textarea,button{font-size:16px;max-width:100%}
 .yr-h{display:flex;align-items:flex-end;flex-wrap:wrap;gap:8px 18px;margin:44px 0 20px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .yr-g:first-of-type .yr-h{margin-top:8px}
 .yr-n{font:700 clamp(40px,6vw,64px)/1 "Cairo","IBM Plex Sans Arabic",sans-serif;color:var(--teal)}
-.yr-c{font:600 15px "Cairo","IBM Plex Sans Arabic",sans-serif;color:var(--mute);padding-bottom:6px}
+.yr-c{font:600 5px "Cairo","IBM Plex Sans Arabic",sans-serif;color:var(--mute);padding-bottom:2px}
 .yr-m{margin-inline-start:auto;display:flex;align-items:flex-end;gap:5px;height:42px;padding-bottom:4px}
 .yr-m i{display:block;width:6px;height:var(--h);border-radius:3px;background:var(--gold)}
 .yr-m i.pk{background:var(--teal)}.yr-m i.z{background:var(--line)}
@@ -698,7 +698,7 @@ const MN=['يناير','فبراير','مارس','أبريل','مايو','يون
 const cntLbl=n=>{const f=NF[document.body.dataset.r];if(!f)return String(n);return n==1?f[0]:n==2?f[1]:n<=10?n+' '+f[2]:n+' '+f[3]};
 const monthBars=(rows,k,f)=>{const c=Array(12).fill(0);rows.forEach(r=>{const m=String(r[k]||r[f]||'').match(/^\d{4}-(\d{2})/);if(m&&+m[1]>=1&&+m[1]<=12)c[+m[1]-1]++});const mx=Math.max(...c);if(!mx)return'';return `<span class="yr-m" role="img" aria-label="التوزيع الشهري: ${c.map((n,i)=>n?MN[i]+' '+n:'').filter(Boolean).join('، ')}">${c.map((n,i)=>`<i class="${n?(n==mx?'pk':''):'z'}" style="--h:${n?Math.max(26,Math.round(n/mx*100)):10}%" title="${MN[i]}: ${n}"></i>`).join('')}</span>`};
 const yrView=(rows,k,f,item,lay)=>{const G={};byDate(rows,k,f).forEach(r=>(G[yrOf(r,k,f)]=G[yrOf(r,k,f)]||[]).push(r));const ys=Object.keys(G).map(Number).sort((a,b)=>(b||-1)-(a||-1)),nm=y=>y?String(y):'بدون تاريخ';
- return (ys.length>1?`<div class="chips yr-chips"><button class="chip on" data-y="all">الكل<b>${rows.length}</b></button>${ys.map(y=>`<button class="chip" data-y="${y}">${nm(y)}<b>${G[y].length}</b></button>`).join('')}</div>`:'')+ys.map(y=>`<section class="yr-g" data-y="${y}"><h3 class="yr-h"><span class="yr-n">${nm(y)}</span><span class="yr-c">${cntLbl(G[y].length)}</span>${y?monthBars(G[y],k,f):''}</h3>${lay?lay(G[y],ys.indexOf(y)):`<div class="grid">${G[y].map(item).join('')}</div>`}</section>`).join('')};
+ return (ys.length>1?`<div class="chips yr-chips"><button class="chip on" data-y="all">الكل<b>${rows.length}</b></button>${ys.map(y=>`<button class="chip" data-y="${y}">${nm(y)}<b>${G[y].length}</b></button>`).join('')}</div>`:'')+ys.map(y=>`<section class="yr-g" data-y="${y}"><h3 class="yr-h"><span class="yr-n">${nm(y)}</span><span class="yr-c">${cntLbl(G[y].length)}</span></h3>${lay?lay(G[y],ys.indexOf(y)):`<div class="grid">${G[y].map(item).join('')}</div>`}</section>`).join('')};
 function yrBind(){const bx=app.querySelector('.yr-chips');if(!bx)return;bx.onclick=e=>{const b=e.target.closest('[data-y]');if(!b)return;bx.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c==b));app.querySelectorAll('.yr-g').forEach(g=>g.hidden=b.dataset.y!=='all'&&g.dataset.y!==b.dataset.y)}}
 const artCard=r=>`<article class="art"${SK(r)}><a href="#/articles/${encodeURIComponent(r.slug||r.id)}">${img(r.cover_url)}</a><div class="bd">${share('articles',r)}<h3><a href="#/articles/${encodeURIComponent(r.slug||r.id)}">${esc(r.title)}</a></h3><p>${r.author?'الكاتب: '+esc(r.author):''}${r.reviewer?'<br>المدقق: '+esc(r.reviewer):''}</p><p>${chip(esc(fd(r.published_at)))}${chip(readTime(r))}</p><div class="row" style="gap:8px"><a class="btn g" style="padding:4px 16px;font-size:14px" href="#/articles/${encodeURIComponent(r.slug||r.id)}">قراءة</a>${r.file_url?`<a class="btn" style="padding:4px 16px;font-size:14px;color:var(--ink);border-color:var(--line)" href="${esc(r.file_url)}" download target="_blank" rel="noopener">تحميل</a>`:''}</div></div></article>`;
 const sec=(title,t,rows,fn)=>`<section><div class="wrap"><div class="head"><h2>${title}</h2><a class="more" href="#/${t}">عرض الكل</a></div>${rows.length?`<div class="grid">${rows.map(fn).join('')}</div>`:empty()}</div></section>`;
@@ -736,7 +736,7 @@ async home(){
    const brandLogo=document.querySelector('.brand .logo');if(brandLogo&&hp.logo_url)brandLogo.style.backgroundImage=`url("${String(hp.logo_url).replace(/["\\]/g,'')}")`;const heroA=document.querySelector('.hero .col .a'),heroB=document.querySelector('.hero .col .b');const bgs=[hp.bg_1,hp.bg_2,hp.bg_3].filter(Boolean),hb=document.getElementById('hbg');if(hb&&bgs.length){hb.innerHTML=bgs.map((u,i)=>`<i style="background-image:url('${esc(u)}')" class="${i?'':'on'}"></i>`).join('');document.querySelector('.hs-w').classList.add('has-bg');if(bgs.length>1){let n=0;clearInterval(window._hb);window._hb=setInterval(()=>{const e=hb.children;if(!e.length)return;e[n].classList.remove('on');n=(n+1)%e.length;e[n].classList.add('on')},6000)}}if(heroA&&hp.image_1)heroA.src=hp.image_1;if(heroB&&hp.image_2)heroB.src=hp.image_2;heroInit();
   };
   const parseHp=sc=>{try{return typeof sc.homepage=='string'?JSON.parse(sc.homepage):sc.homepage||{}}catch{return {}}};
-  app.innerHTML='<div id="hero-slot"></div><div id="s-feat"></div><div id="s-news"></div><div id="s-ach"></div><div id="s-art"></div><div id="s-lib"></div><div id="s-rep"></div><div id="s-pt"></div><div id="s-ident"></div><div id="s-stats"></div><div id="s-join"></div>';
+  app.innerHTML='<div id="hero-slot"></div><div id="s-feat"></div><div id="s-news"></div><div id="s-ach"></div><div id="s-art"></div><div id="s-lib"></div><div id="s-rep"></div><div id="s-pt"></div><div id="s-ident"></div><div id="s-join"></div>';
   drawHero();                       /* الواجهة الأساسية تظهر فورًا بلا أي طلب شبكة */
   LOG('DATA_START');
   window._fill={};
@@ -756,7 +756,6 @@ async home(){
    fill('s-pt',()=>pubc('partnerships').catch(()=>[]),ptStrip),
    fill('s-rep',()=>pub('reports',6),rp=>(rp.length?carSec('تقارير النادي','reports',rp,repCard):''),carDots),
    fill('s-ident',()=>scP,sc=>(sc.vision||sc.mission||sc.goals?`<section class="ident"><div class="vl"></div><div class="wrap c3">${[['رؤيتنا','vision'],['رسالتنا','mission'],['أهدافنا','goals']].filter(x=>sc[x[1]]).map(x=>`<div><h3>${x[0]}</h3><p>${esc(sc[x[1]])}</p></div>`).join('')}</div></section>`:'')),
-   fill('s-stats',()=>db.from('site_stats').select('*').limit(1).maybeSingle().then(ok),st=>!st?'':`<section><div class="wrap"><div class="head"><h2>النادي بالأرقام</h2></div><div class="stats">${[['events','فعالية'],['news','خبر'],['articles','مقال'],['reports','تقرير'],['members','عضو']].map(([k,l])=>`<div class="st"><b>${st[k]}</b>${l}</div>`).join('')}</div></div></section>`),
    (async()=>{const el=document.getElementById('s-join');if(!el)return;el.innerHTML=joinSec([]);
      try{const cm=await joinCommittees(),dl=document.getElementById('cl');if(dl&&el.isConnected)dl.innerHTML=[...new Set(cm.map(c=>c.title))].map(c=>`<option value="${esc(c)}">`).join('')}catch(e){console.error(TAG,'committees',e)}})()
   ]).then(()=>LOG('DATA_DONE'));
