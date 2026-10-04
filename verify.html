@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>التحقق من الشهادات | نادي الدراسات القضائية والأنظمة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--teal:#0E5E5B;--deep:#083B3A;--gold:#A9844B;--gold-soft:#F4ECDA;--ink:#12302F;--mute:#617572;--line:#DAD5C6;--ok:#17663c;--bad:#a22d27}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:'IBM Plex Sans Arabic',sans-serif;min-height:100vh;display:grid;place-items:center;padding:calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+ background-image:repeating-linear-gradient(90deg,transparent 0 23px,rgba(169,132,75,.10) 23px 24px)}
+.card{width:min(100%,640px);background:#fff;border:1px solid var(--line);border-top:5px solid var(--gold);border-radius:8px 32px 8px 8px;padding:clamp(20px,5vw,40px);box-shadow:0 30px 70px -40px rgba(8,59,58,.45)}
+.top{display:flex;align-items:center;gap:14px}.bars{display:flex;align-items:flex-end;gap:4px;height:38px}.bars i{width:4px;background:var(--gold);border-radius:2px}
+.bars i:nth-child(1),.bars i:nth-child(7){height:30%}.bars i:nth-child(2),.bars i:nth-child(6){height:55%}.bars i:nth-child(3),.bars i:nth-child(5){height:85%}.bars i:nth-child(4){height:100%}
+.brand{font:700 20px/1.3 'Cairo',sans-serif;color:var(--teal)}.sub{color:var(--mute);font-size:14px}
+.divider{height:1px;background:var(--line);margin:22px 0}
+h1{font:700 clamp(24px,5vw,32px)/1.4 'Cairo',sans-serif;margin:0 0 6px;color:var(--deep)}
+.muted{color:var(--mute);font-size:14px;margin:0 0 18px}
+label{display:block;font-weight:600;margin-bottom:8px}
+.fld{display:flex;gap:10px;flex-wrap:wrap}
+input{flex:1 1 220px;min-width:0;padding:14px;border:1.5px solid #CBC6B5;border-radius:12px;font:600 17px 'IBM Plex Sans Arabic',sans-serif;letter-spacing:.06em;text-transform:uppercase;text-align:center}
+input:focus{outline:0;border-color:var(--teal);box-shadow:0 0 0 4px rgba(14,94,91,.13)}
+button{background:var(--teal);color:#fff;border:0;border-radius:12px;padding:13px 26px;font:600 16px 'IBM Plex Sans Arabic',sans-serif;cursor:pointer;box-shadow:0 3px 0 var(--deep);transition:.2s}
+button:hover{background:var(--deep)}button:disabled{opacity:.6;cursor:wait}
+.result{margin-top:24px;display:none}
+.res{border-radius:18px;padding:22px;border:1px solid var(--line);animation:pop .45s cubic-bezier(.2,.8,.2,1)}
+.res.ok{background:#F1FAF5;border-color:#bfe3cf}.res.bad{background:#FDF3F2;border-color:#efc5c1}.res.nf{background:#FFF8E6;border-color:#e6d09b}
+.hd{display:flex;align-items:center;gap:14px}
+.ic{flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:#fff}.ok .ic{background:var(--ok)}.bad .ic,.nf .ic{background:var(--bad)}.nf .ic{background:#B7791F}
+.ic svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .6s .2s forwards}
+.hd b{font:700 22px/1.4 'Cairo',sans-serif}.ok .hd b{color:var(--ok)}.bad .hd b,.nf .hd b{color:var(--bad)}.nf .hd b{color:#8a5a12}
+.name{font:700 clamp(22px,5vw,30px)/1.5 'Cairo',sans-serif;color:var(--deep);margin:16px 0 4px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:12px 0 0}dt{color:var(--mute)}dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.acts button{background:#fff;color:var(--teal);border:1px solid var(--teal);box-shadow:none;padding:8px 18px;font-size:14px}.acts button:hover{background:var(--gold-soft)}
+.spin{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;display:inline-block;vertical-align:middle;margin-inline-end:10px;animation:sp .8s linear infinite}
+.foot{margin-top:24px;color:#77837f;font-size:12px;text-align:center}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}}@keyframes draw{to{stroke-dashoffset:0}}@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}.ic svg{stroke-dashoffset:0}}
+@media print{body{background:#fff}.fld,.acts,.foot,.divider+h1,.muted{display:none}.card{box-shadow:none}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+</head><body><main class="card">
+<div class="top"><div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><div class="brand">جامعة أم القرى</div><div class="sub">نادي الدراسات القضائية والأنظمة</div></div></div>
+<div class="divider"></div>
+<h1>التحقق من الشهادات الرقمية</h1>
+<p class="muted">أدخل رقم التحقق المطبوع على الشهادة، أو امسح رمز QR الموجود عليها لتُفتح هذه الصفحة تلقائيًا.</p>
+<label for="no">رقم الشهادة</label>
+<div class="fld"><input id="no" placeholder="UQL-2026-XXXXXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" dir="ltr"><button id="go">تحقق من الشهادة</button></div>
+<section class="result" id="result" aria-live="polite"></section>
+<div class="foot">خدمة التحقق الرسمية — نادي الدراسات القضائية والأنظمة بجامعة أم القرى</div></main>
+<script>
+const SB_URL='https://dsinztikwvuqhhwrhisg.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzaW56dGlrd3Z1cWhod3JoaXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NTQ2MDcsImV4cCI6MjEwNjQzMDYwN30.MhBz5vD_s4u87y6c0tz1LgPtx18sjuEir0tju0f-ieQ';
+const db=window.supabase.createClient(SB_URL,SB_KEY);const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KIND={participation:'شهادة مشاركة',attendance:'شهادة حضور',volunteering:'شهادة تطوع'};
+const fdate=s=>{if(!s)return'—';const d=new Date(String(s).slice(0,10)+'T12:00:00');return isNaN(d)?esc(s):d.toLocaleDateString('ar-SA-u-ca-gregory',{year:'numeric',month:'long',day:'numeric'})};
+const CHK='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',X='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const show=h=>{const b=$('result');b.style.display='block';b.innerHTML=h};
+async function verify(){
+ const no=$('no').value.replace(/\s+/g,'').toUpperCase();$('no').value=no;if(!no){$('no').focus();return}
+ const btn=$('go');btn.disabled=true;show('<p class="muted"><span class="spin"></span>جارٍ التحقق من الشهادة…</p>');
+ try{
+  const{data,error}=await db.rpc('verify_certificate',{p_no:no});
+  if(error)return show('<div class="res bad"><div class="hd"><span class="ic">'+X+'</span><b>تعذّر التحقق حاليًا</b></div><p class="muted" style="margin:12px 0 0">يرجى المحاولة بعد قليل.</p></div>');
+  if(!data?.found)return show('<div class="res nf"><div class="hd"><span class="ic">'+X+'</span><b>لم يتم العثور على شهادة بهذا الرقم</b></div><p class="muted" style="margin:12px 0 0">تأكد من كتابة الرقم كما هو مطبوع على الشهادة، أو امسح رمز QR مباشرة.</p></div>');
+  const d=data,valid=d.status==='valid';
+  show(`<div class="res ${valid?'ok':'bad'}"><div class="hd"><span class="ic">${valid?CHK:X}</span><b>${valid?'شهادة صحيحة وسارية':'هذه الشهادة ملغاة'}</b></div>
+  <div class="name">${esc(d.recipient_name)}</div>
+  <dl><dt>نوع الشهادة</dt><dd>${esc(KIND[d.kind]||'شهادة')}</dd><dt>الفعالية</dt><dd>${esc(d.title)}</dd>${d.hours?`<dt>عدد الساعات</dt><dd>${esc(d.hours)}</dd>`:''}<dt>تاريخ الإصدار</dt><dd>${fdate(d.issued_on)}</dd><dt>الجهة المصدرة</dt><dd>${esc(d.issuer_name||'نادي الدراسات القضائية والأنظمة — جامعة أم القرى')}</dd><dt>رقم الشهادة</dt><dd dir="ltr" style="text-align:right">${esc(d.verify_no)}</dd></dl>
+  <div class="acts"><button type="button" id="cp">نسخ رابط التحقق</button><button type="button" id="pr">طباعة نتيجة التحقق</button></div></div>`);
+  $('cp').onclick=async e=>{const u=location.origin+location.pathname+'?no='+encodeURIComponent(d.verify_no);try{await navigator.clipboard.writeText(u);e.target.textContent='تم النسخ ✓'}catch(_){prompt('انسخ الرابط',u)}};
+  $('pr').onclick=()=>print();
+ }catch(e){console.error(e);show('<div class="res bad"><div class="hd"><span class="ic">'+X+'</span><b>تعذّر الاتصال بالخدمة</b></div></div>')}
+ finally{btn.disabled=false}}
+$('go').onclick=verify;$('no').addEventListener('keydown',e=>{if(e.key==='Enter')verify()});
+const p=new URLSearchParams(location.search).get('no');if(p){$('no').value=p;verify()}
+</script></body></html>
