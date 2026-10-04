@@ -512,21 +512,105 @@ async function certEnv(tpl,fontRow){await certLoad();const bg=new Image();bg.src
  else{try{await document.fonts.load('700 40px Cairo');await document.fonts.load('400 40px Cairo')}catch(_){}}
  return{bg,fam,tpl}}
 const certDate=(s,m)=>{if(!s||m==='raw')return String(s||'');const d=new Date(String(s).slice(0,10)+'T12:00:00');return isNaN(d)?String(s):d.toLocaleDateString('ar-SA-u-ca-gregory',{year:'numeric',month:'long',day:'numeric'})};
-function certDraw(env,rec,cv,o){const{bg,fam,tpl}=env,W=cv.width=bg.naturalWidth||bg.width,H=cv.height=bg.naturalHeight||bg.height,ctx=cv.getContext('2d'),F=tpl.fields||[];ctx.drawImage(bg,0,0,W,H);
+function certDraw(env,rec,cv,o){const{bg,fam,tpl}=env,W=cv.width=bg.naturalWidth||bg.width,H=cv.height=bg.naturalHeight||bg.height,ctx=cv.getContext('2d'),F=tpl.fields||[],ST=rec.style||{};ctx.drawImage(bg,0,0,W,H);
  const V={recipient_name:rec.recipient_name,event_name:rec.event_name,event_date:certDate(rec.event_date,o.dm),hours:rec.hours,verify_no:o.verify};
  const qrc=()=>{const b=document.createElement('div');new QRCode(b,{text:o.qr,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});return b.querySelector('canvas')};
  for(const f of F){const x=f.x*W,y=f.y*H,w=f.w*W,h=f.h*H;
   if(f.key==='qr_code'){const q=qrc();if(q){const s=Math.min(w,h);ctx.drawImage(q,x+(w-s)/2,y+(h-s)/2,s,s)}continue}
-  const val=String(V[f.key]??'');if(!val)continue;let size=f.fontSize||30;const wt=f.fontWeight||'400';
-  ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.fillStyle=f.color||'#12302F';ctx.textAlign=f.align||'center';ctx.textBaseline='middle';ctx.direction='rtl';ctx.font=`${wt} ${size}px ${fam}`;
-  while(size>12&&ctx.measureText(val).width>w-8){size--;ctx.font=`${wt} ${size}px ${fam}`}
-  ctx.fillText(val,x+(f.align==='left'?0:f.align==='right'?w:w/2),y+h/2,w);ctx.restore()}
+  const val=String(V[f.key]??'');if(!val)continue;
+  const st=ST[f.key]||{},custom=Object.keys(st).length>0,manual=!!(st.fs&&st.fs!==100);
+  let size=(f.fontSize||30)*((st.fs||100)/100);const wt=f.fontWeight||'400';
+  ctx.save();ctx.beginPath();if(custom)ctx.rect(x-w*.15,y-h*.8,w*1.3,h*2.6);else ctx.rect(x,y,w,h);ctx.clip();
+  ctx.fillStyle=st.color||f.color||'#12302F';ctx.textAlign=f.align||'center';ctx.textBaseline='middle';ctx.direction='rtl';ctx.font=`${wt} ${size}px ${fam}`;
+  if(!manual){while(size>12&&ctx.measureText(val).width>w-8){size--;ctx.font=`${wt} ${size}px ${fam}`}}
+  ctx.fillText(val,x+(f.align==='left'?0:f.align==='right'?w:w/2),y+h/2+(st.dy||0)/100*h);ctx.restore()}
  if(o.autoQr&&!F.some(f=>f.key==='qr_code')){const q=qrc(),s=Math.round(Math.min(W,H)*.11),x=Math.round(W*.04),y=H-s-Math.round(H*.04);
   if(q){ctx.fillStyle='#fff';ctx.fillRect(x-8,y-8,s+16,s+16);ctx.drawImage(q,x,y,s,s);
    if(!F.some(f=>f.key==='verify_no')){ctx.fillStyle='#12302F';ctx.direction='ltr';ctx.textAlign='left';ctx.textBaseline='top';ctx.font=`700 ${Math.max(12,Math.round(s*.13))}px ${fam}`;ctx.fillText(o.verify,x,y+s+12)}}}}
-async function certZipDown(list,name){if(!window.JSZip)await certLib('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');const zip=new JSZip();
- for(const c of list.filter(x=>x.pdf_path)){const r=await fetch(await certFileURL(c.pdf_path));if(!r.ok)throw new Error('تعذّر تنزيل '+c.verify_no);zip.file(certSafeName(c.recipient_name)+'-'+c.verify_no+'.pdf',await r.blob())}
- const a=document.createElement('a');a.href=URL.createObjectURL(await zip.generateAsync({type:'blob'}));a.download=(name||'UQU-certificates')+'.zip';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
+/* PDF أخفّ وأسرع: يصغّر الصورة المدمجة إلى 2200px كحد أقصى (يبقى مقاس الصفحة كما هو) */
+function certPdfBlob(cv,q){const{jsPDF}=window.jspdf,MAXW=2200,k=cv.width>MAXW?MAXW/cv.width:1;let src=cv;
+ if(k<1){src=certPdfBlob._c||(certPdfBlob._c=document.createElement('canvas'));src.width=Math.round(cv.width*k);src.height=Math.round(cv.height*k);src.getContext('2d').drawImage(cv,0,0,src.width,src.height)}
+ const pdf=new jsPDF({orientation:cv.width>=cv.height?'landscape':'portrait',unit:'px',format:[cv.width,cv.height],compress:true});
+ pdf.addImage(src.toDataURL('image/jpeg',q||.88),'JPEG',0,0,cv.width,cv.height);return pdf.output('blob')}
+const certSave=(blob,fn)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),30000)};
+/* تحميل مباشر لشهادة واحدة (يحفظ الملف دون فتح تبويب) */
+async function certDownloadOne(c){const fn=certSafeName(c.recipient_name)+'-'+c.verify_no+'.pdf',r=await db.storage.from(CERT_BUCKET).createSignedUrl(c.pdf_path,300,{download:fn});if(r.error)throw r.error;const a=document.createElement('a');a.href=r.data.signedUrl;a.download=fn;document.body.appendChild(a);a.click();a.remove()}
+/* لوحة تنسيق الخط لكل شهادة: الحجم / اللون / الإزاحة لكل حقل */
+function certStyleCtl(host,getObj,onChange,getFields,opts){opts=opts||{};
+ const LAB={recipient_name:'اسم المستفيد',event_name:'اسم الفعالية',event_date:'تاريخ الفعالية',hours:'عدد الساعات'};
+ const keys=()=>(getFields()||[]).map(f=>f.key).filter(k=>LAB[k]);
+ host.innerHTML=`<div class="box" style="gap:8px"><h4>🎨 تنسيق خط هذه الشهادة</h4><small class="hint">التعديل هنا يخص الشهادة المعروضة فقط، دون التأثير على بقية الشهادات.</small>
+ <div class="mini" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+ <label>الحقل<select data-k="field"></select></label>
+ <label>حجم الخط <b data-o="fs">100%</b><input type="range" data-k="fs" min="40" max="250" step="5" value="100"></label>
+ <label>لون الخط<input type="color" data-k="color" value="#12302F"></label>
+ <label>إزاحة رأسية <b data-o="dy">0</b><input type="range" data-k="dy" min="-60" max="60" step="2" value="0"></label></div>
+ <div class="record-actions"><button type="button" data-r="fld">إعادة ضبط هذا الحقل</button><button type="button" data-r="all">إعادة ضبط كل الحقول</button>${opts.applyAll?'<button type="button" data-r="apply">تطبيق هذا التنسيق على كل الشهادات</button>':''}</div></div>`;
+ const q=s=>host.querySelector(s),sel=q('[data-k=field]'),fld=()=>(getFields()||[]).find(f=>f.key===sel.value)||{};
+ const hex=c=>/^#[0-9a-f]{6}$/i.test(c||'')?c:'#12302F';
+ const sync=()=>{const ks=keys();if(sel.options.length!==ks.length){const p=sel.value;sel.innerHTML=ks.map(k=>`<option value="${k}">${LAB[k]}</option>`).join('');if(ks.includes(p))sel.value=p}
+  const o=getObj(false)||{},st=o[sel.value]||{};q('[data-k=fs]').value=st.fs||100;q('[data-o=fs]').textContent=(st.fs||100)+'%';q('[data-k=dy]').value=st.dy||0;q('[data-o=dy]').textContent=st.dy||0;q('[data-k=color]').value=hex(st.color||fld().color)};
+ const set=(k,v)=>{const o=getObj(true),key=sel.value;const st=o[key]=o[key]||{};st[k]=v;q('[data-o=fs]').textContent=(st.fs||100)+'%';q('[data-o=dy]').textContent=st.dy||0;onChange()};
+ q('[data-k=fs]').oninput=e=>set('fs',+e.target.value);q('[data-k=dy]').oninput=e=>set('dy',+e.target.value);q('[data-k=color]').oninput=e=>set('color',e.target.value);
+ sel.onchange=sync;
+ q('[data-r=fld]').onclick=()=>{const o=getObj(true);delete o[sel.value];sync();onChange()};
+ q('[data-r=all]').onclick=()=>{const o=getObj(true);Object.keys(o).forEach(k=>delete o[k]);sync();onChange()};
+ const ap=q('[data-r=apply]');if(ap)ap.onclick=()=>{opts.applyAll(structuredClone(getObj(true)));toast('طُبّق التنسيق على كل الشهادات')};
+ sync();return{sync}}
+/* تعديل شهادة صادرة: يعيد توليد PDF بنفس رقم التحقق ورمز QR */
+async function certEditOne(c,after){
+ if(!certPerm('certificates_issue'))return toast('لا تملك صلاحية تعديل الشهادات');
+ toast('جارٍ تجهيز المحرر…');
+ try{await certLoad();
+  const[tpl,F,bt,au]=await Promise.all([db.from('certificate_templates').select('*').eq('id',c.template_id).single().then(ok),db.from('certificate_fonts').select('*').order('created_at',{ascending:false}).then(ok),c.batch_id?db.from('certificate_batches').select('font_id').eq('id',c.batch_id).maybeSingle().then(r=>r.data):Promise.resolve(null),db.from('certificate_audit_log').select('details,action').eq('certificate_id',c.id).in('action',['edited','issued']).order('created_at',{ascending:false}).limit(1).then(r=>(r.data&&r.data[0]&&r.data[0].details)||{})]);
+  const D=au||{},S0=structuredClone(D.style||{});let S=S0,env=null,envKey='',tm=0,busy=false;
+  const ov=document.createElement('div');ov.className='dz-ov';
+  ov.innerHTML=`<div class="dz-m" style="max-width:940px;text-align:start;max-height:94vh;overflow:auto"><h3>✏️ تعديل الشهادة <small>${esc(c.verify_no)}</small></h3>
+  <div class="cw-prev"><canvas id="e-cv"></canvas></div>
+  <div class="mini" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"><label>اسم المستفيد<input id="e-name"></label><label>اسم الفعالية<input id="e-ev"></label><label>تاريخ الفعالية<input id="e-dt" type="date"></label><label>عدد الساعات<input id="e-hr" type="number" min="0" step="0.5"></label>
+  <label>الخط<select id="e-font"><option value="">الخط الافتراضي (Cairo)</option>${F.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('')}</select></label>
+  <label>شكل التاريخ<select id="e-dm"><option value="ar">عربي: ٤ أكتوبر ٢٠٢٦</option><option value="raw">كما أُدخل</option></select></label></div>
+  <div id="e-style"></div>
+  <small class="hint">عند الحفظ يُستبدل ملف PDF بنسخة جديدة بنفس رقم التحقق ورمز QR، ويُسجَّل التعديل في سجل العمليات.</small>
+  <div class="dz-a"><button class="p" id="e-save">حفظ وإعادة توليد PDF</button><button type="button" id="e-cancel">إلغاء</button></div></div>`;
+  document.body.appendChild(ov);const $=x=>ov.querySelector(x);
+  $('#e-name').value=c.recipient_name||'';$('#e-ev').value=c.title||'';$('#e-dt').value=String(D.event_date||c.issued_on||'').slice(0,10);$('#e-hr').value=c.hours??'';$('#e-dm').value=D.dm||'ar';
+  const fid=(bt&&bt.font_id)||'';$('#e-font').value=F.some(f=>f.id===fid)?fid:'';
+  const AQ=D.qr!==false,rec=()=>({recipient_name:$('#e-name').value.trim()||c.recipient_name,event_name:$('#e-ev').value.trim(),event_date:$('#e-dt').value,hours:$('#e-hr').value,style:S});
+  const opt=()=>({verify:c.verify_no,qr:PUB()+'verify.html?no='+encodeURIComponent(c.verify_no),autoQr:AQ,dm:$('#e-dm').value});
+  const draw=async()=>{try{const fnt=F.find(f=>f.id===$('#e-font').value)||null,key=tpl.id+'|'+(fnt?fnt.id:'');if(!env||envKey!==key){env=await certEnv(tpl,fnt);envKey=key}certDraw(env,rec(),$('#e-cv'),opt())}catch(e){console.error(e);toast('تعذّرت المعاينة: '+(e.message||e),5000)}};
+  const upd=()=>{clearTimeout(tm);tm=setTimeout(draw,200)};
+  ['#e-name','#e-ev','#e-dt','#e-hr'].forEach(x=>$(x).oninput=upd);['#e-dm','#e-font'].forEach(x=>$(x).onchange=upd);
+  certStyleCtl($('#e-style'),cr=>S,upd,()=>tpl.fields||[]);
+  $('#e-cancel').onclick=()=>ov.remove();
+  $('#e-save').onclick=async()=>{if(busy)return;busy=true;const b=$('#e-save');b.disabled=true;b.textContent='جارٍ الحفظ…';
+   try{await draw();const r=rec(),blob=certPdfBlob($('#e-cv'),.92),path=c.pdf_path||`issued/${c.batch_id||'edited'}/${c.verify_no}.pdf`;
+    await certUpload(path,new File([blob],c.verify_no+'.pdf',{type:'application/pdf'}));
+    const hr=parseFloat(r.hours);await db.from('certificates').update({recipient_name:r.recipient_name,title:r.event_name||c.title,hours:isFinite(hr)?hr:null,pdf_path:path}).eq('id',c.id).then(ok);
+    try{await db.from('certificate_audit_log').insert({certificate_id:c.id,batch_id:c.batch_id||null,action:'edited',details:{recipient_name:r.recipient_name,verify_no:c.verify_no,event_date:r.event_date,dm:$('#e-dm').value,qr:AQ,style:S,font_id:$('#e-font').value||null}})}catch(_){}
+    ov.remove();toast('تم حفظ التعديل وإعادة توليد الشهادة');if(after)after()}
+   catch(e){console.error(e);toast('تعذّر الحفظ: '+(e.message||e),7000);b.disabled=false;b.textContent='حفظ وإعادة توليد PDF'}finally{busy=false}};
+  draw()}catch(e){console.error(e);toast('تعذّر فتح المحرر: '+(e.message||e),7000)}}
+/* تحميل ZIP سريع: بدون انتظار متسلسل، 8 ملفات بالتوازي، وتقسيم تلقائي كل 60 شهادة، وبدون ضغط (PDF مضغوط أصلًا) */
+async function certZipDown(list,name){
+ list=list.filter(x=>x.pdf_path||x._blob);if(!list.length)return toast('لا توجد ملفات PDF للتحميل');
+ if(!window.JSZip)await certLib('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+ const PART=60,parts=[];for(let i=0;i<list.length;i+=PART)parts.push(list.slice(i,i+PART));
+ const ov=document.createElement('div');ov.className='dz-ov';ov.innerHTML=`<div class="dz-m"><h3>جارٍ تجهيز الشهادات</h3><div class="pbar"><i id="zp-b" style="width:0"></i></div><small id="zp-s">…</small><div class="dz-a"><button type="button" class="d" id="zp-x">إلغاء</button></div></div>`;document.body.appendChild(ov);
+ let cancel=false,got=0;const t0=Date.now(),total=list.length;ov.querySelector('#zp-x').onclick=()=>{cancel=true};
+ const tick=()=>{const el=(Date.now()-t0)/1000,eta=got?Math.max(0,Math.round(el/got*(total-got))):0;ov.querySelector('#zp-b').style.width=Math.round(got/total*100)+'%';ov.querySelector('#zp-s').textContent=`${got} من ${total}${got&&got<total?' · المتبقي نحو '+eta+' ث':''}${parts.length>1?' · سيُقسَّم إلى '+parts.length+' ملفات ZIP':''}`};
+ try{const need=list.filter(x=>!x._blob),urls={};
+  if(need.length){const r=await db.storage.from(CERT_BUCKET).createSignedUrls(need.map(x=>x.pdf_path),900);if(r.error)throw r.error;(r.data||[]).forEach(d=>{if(d.signedUrl)urls[d.path]=d.signedUrl})}
+  for(let pi=0;pi<parts.length&&!cancel;pi++){const P=parts[pi],zip=new JSZip();let next=0;
+   const get=async c=>{if(c._blob)return c._blob;const u=urls[c.pdf_path];if(!u)throw new Error('تعذّر تنزيل '+c.verify_no);const r=await fetch(u);if(!r.ok)throw new Error('تعذّر تنزيل '+c.verify_no);return r.blob()};
+   const worker=async()=>{while(next<P.length&&!cancel){const c=P[next++];zip.file(certSafeName(c.recipient_name)+'-'+c.verify_no+'.pdf',await get(c));got++;tick()}};
+   await Promise.all(Array.from({length:Math.min(8,P.length)},worker));if(cancel)break;
+   ov.querySelector('#zp-s').textContent='جارٍ حفظ الملف…';
+   const blob=await zip.generateAsync({type:'blob',compression:'STORE'});
+   certSave(blob,(name||'UQU-certificates')+(parts.length>1?`-جزء${pi+1}-من-${parts.length}`:'')+'.zip');
+   if(pi<parts.length-1)await new Promise(r=>setTimeout(r,800))}
+  toast(cancel?'أُلغي التحميل':'اكتمل التحميل خلال '+Math.round((Date.now()-t0)/1000)+' ث',4000)}
+ catch(e){console.error(e);toast('تعذّر إنشاء ZIP: '+(e.message||e),7000)}finally{ov.remove()}}
 async function certIssue(w,h){
  const[T,F]=await Promise.all([db.from('certificate_templates').select('*').order('created_at',{ascending:false}).then(ok),db.from('certificate_fonts').select('*').order('created_at',{ascending:false}).then(ok)]);
  let S=[];try{S=await db.from('attendance_sessions').select('id,title').order('created_at',{ascending:false}).limit(60).then(ok)}catch(_){}
@@ -536,7 +620,9 @@ async function certIssue(w,h){
   <label>قالب الشهادة<select id="b-tpl">${T.length?'':'<option value="">لا توجد قوالب — ارفعي قالبًا من تبويب «قوالب الشهادات»</option>'}${T.map(t=>`<option value="${t.id}" ${t.is_default?'selected':''}>${esc(t.name)}</option>`).join('')}</select></label>
   <div id="b-tpl-st"></div>
   <label>الخط<select id="b-font"><option value="">الخط الافتراضي للمنصة (Cairo) — جاهز دون رفع أي ملف</option>${F.map(f=>`<option value="${f.id}" ${f.is_default?'selected':''}>${esc(f.name)}</option>`).join('')}</select></label>
-  <label class="cw-chk"><input type="checkbox" id="b-qr" checked> أضيفي رمز QR ورقم التحقق تلقائيًا في زاوية الشهادة إن لم يكونا ضمن القالب</label></div>
+  <label class="cw-chk"><input type="checkbox" id="b-qr" checked> أضيفي رمز QR ورقم التحقق تلقائيًا في زاوية الشهادة إن لم يكونا ضمن القالب</label>
+  <label>جودة ملف PDF<select id="b-q"><option value=".88">متوازنة — الأسرع (موصى بها)</option><option value=".94">عالية</option><option value=".78">خفيفة جدًا — أسرع تحميل</option></select></label>
+  <label class="cw-chk"><input type="checkbox" id="b-auto" checked> تنزيل ملف ZIP تلقائيًا فور انتهاء الإصدار</label></div>
  <div class="box"><h3>٢) بيانات الفعالية</h3>
   <div class="mini" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))"><label>نوع الشهادة<select id="b-kind"><option value="participation">مشاركة</option><option value="attendance">حضور</option><option value="volunteering">تطوع</option></select></label>
   <label>اسم الفعالية *<input id="b-event" placeholder="مثال: ملتقى الأنظمة السنوي"></label>
@@ -552,13 +638,14 @@ async function certIssue(w,h){
  <div class="box"><h3>٤) المعاينة والإصدار</h3><div id="b-warn"></div>
   <div class="cw-prev" id="b-prev"><p class="hint">ستظهر المعاينة الحيّة هنا فور اكتمال الخطوات.</p></div>
   <div class="cw-nav"><button type="button" id="b-pv">‹ السابق</button><span id="b-pn"></span><button type="button" id="b-nx">التالي ›</button></div>
+  <div id="b-style"></div>
   <div class="cw-prog" id="b-pg" style="display:none"><div class="pbar"><i id="b-bar" style="width:0"></i></div><small id="b-st"></small><button type="button" class="d" id="b-stop">إيقاف الإصدار</button></div>
   <button class="p" id="b-issue" disabled style="font-size:17px;padding:12px">اعتماد وإصدار الشهادات</button><div id="b-res"></div></div>`;
  const $=s=>w.querySelector(s),norm=s=>String(s||'').replace(/\s+/g,' ').trim();
- let X={},names=[],idx=0,env=null,envKey='',busy=false,stop=false,dups=0,tm=0;
+ let X={},OV={},ctl=null,names=[],idx=0,env=null,envKey='',busy=false,stop=false,dups=0,tm=0;
  const cur=()=>({tpl:T.find(x=>x.id===$('#b-tpl').value),font:F.find(x=>x.id===$('#b-font').value)||null});
  const readNames=()=>{const seen=new Set(),L=[];dups=0;$('#b-names').value.split(/\r?\n/).forEach(l=>{const n=norm(l);if(!n)return;const k=n.replace(/[إأآ]/g,'ا');if(seen.has(k)){dups++;return}seen.add(k);L.push(n)});names=L;return L};
- const recOf=n=>({recipient_name:n,university_id:'',event_name:$('#b-event').value.trim(),event_date:$('#b-date').value,hours:$('#b-hours').value,...(X[n]||{})});
+ const recOf=n=>({recipient_name:n,university_id:'',event_name:$('#b-event').value.trim(),event_date:$('#b-date').value,hours:$('#b-hours').value,...(X[n]||{}),style:OV[n]||{}});
  const mark=()=>{const{tpl}=cur(),f1=!!tpl&&(tpl.fields||[]).some(f=>f.key==='recipient_name'),f2=!!$('#b-event').value.trim(),n=readNames().length,f3=n>0,fl=[f1,f2,f3],bad=fl.indexOf(false);
   w.querySelectorAll('#cw-steps li').forEach((li,i)=>{li.className=i<3?(fl[i]?'ok':i===bad?'cur':''):(bad===-1?'cur':'')});
   $('#b-chips').innerHTML=`<span>المستفيدون: <b>${n}</b></span>${dups?`<span>مكرر محذوف: <b>${dups}</b></span>`:''}`;
@@ -569,7 +656,7 @@ async function certIssue(w,h){
   try{const key=tpl.id+'|'+(font?font.id:'');if(!env||envKey!==key){box.innerHTML='<p class="hint">جارٍ تجهيز القالب…</p>';env=await certEnv(tpl,font);envKey=key}
    idx=Math.max(0,Math.min(idx,names.length-1));let cv=$('#b-cv');if(!cv){box.innerHTML='<canvas id="b-cv"></canvas>';cv=$('#b-cv')}
    certDraw(env,recOf(names[idx]),cv,{verify:'UQL-'+new Date().getFullYear()+'-XXXXXXXX',qr:PUB()+'verify.html?no=UQL-SAMPLE',autoQr:$('#b-qr').checked,dm:$('#b-dm').value});
-   $('#b-pn').textContent=(idx+1)+' / '+names.length+' — '+names[idx]}
+   $('#b-pn').textContent=(idx+1)+' / '+names.length+' — '+names[idx];if(ctl)ctl.sync()}
   catch(e){console.error(e);env=null;box.innerHTML='<div class="cw-warn">تعذّرت المعاينة: '+esc(e.message||e)+'</div>'}};
  const upd=()=>{mark();clearTimeout(tm);tm=setTimeout(draw,350)};
  ['#b-names','#b-event','#b-date','#b-hours'].forEach(s=>$(s).oninput=upd);['#b-tpl','#b-font','#b-qr','#b-dm'].forEach(s=>$(s).onchange=()=>{env=null;upd()});
@@ -585,31 +672,40 @@ async function certIssue(w,h){
   try{await certLoad();env=await certEnv(tpl,font);envKey=tpl.id+'|'+(font?font.id:'');const bn=$('#b-bname').value.trim()||('دفعة '+$('#b-event').value.trim()),mk=fid=>db.from('certificate_batches').insert({name:bn,template_id:tpl.id,font_id:fid,total_count:L.length,status:'previewed'}).select().single();
    let br=await mk(font?font.id:null);if(br.error&&br.error.code==='23502'&&F[0])br=await mk(F[0].id);
    if(br.error){if(br.error.code==='23502')throw new Error('جدول الدفعات يشترط خطًا مرفوعًا: ارفعي خطًا واحدًا من تبويب «إدارة الخطوط» أو نفّذي ملف supabase_updates_oct2026.sql');throw br.error}
-   const batch=br.data,cv=document.createElement('canvas'),{jsPDF}=window.jspdf,kind=$('#b-kind').value;
-   for(let i=0;i<L.length;i++){if(stop)break;const rec=recOf(L[i]);const el=(Date.now()-t0)/1000,eta=i?Math.round(el/i*(L.length-i)):0;st.textContent=`جارٍ إصدار ${i+1} من ${L.length} — ${L[i]}${eta?' · المتبقي نحو '+eta+' ث':''}`;
-    try{let ins=null;for(let k=0;k<3&&!ins;k++){const verify='UQL-'+new Date().getFullYear()+'-'+crypto.randomUUID().replace(/-/g,'').slice(0,8).toUpperCase();
-      certDraw(env,rec,cv,{verify,qr:PUB()+'verify.html?no='+encodeURIComponent(verify),autoQr:$('#b-qr').checked,dm:$('#b-dm').value});
-      const pdf=new jsPDF({orientation:cv.width>=cv.height?'landscape':'portrait',unit:'px',format:[cv.width,cv.height],compress:true});pdf.addImage(cv.toDataURL('image/jpeg',.94),'JPEG',0,0,cv.width,cv.height);
-      const path=`issued/${batch.id}/${verify}.pdf`;await certUpload(path,new File([pdf.output('blob')],verify+'.pdf',{type:'application/pdf'}));const hr=parseFloat(rec.hours);
+   const batch=br.data,cv=document.createElement('canvas'),kind=$('#b-kind').value,Q=parseFloat($('#b-q').value)||.88,AUTO=$('#b-auto').checked,DM=$('#b-dm').value,AQ=$('#b-qr').checked,yr=new Date().getFullYear(),auditRows=[],inflight=new Set();let nDone=0,keepBytes=0;
+    const one=async rec=>{let ins=null,blob=null;
+     for(let k=0;k<3&&!ins;k++){const verify='UQL-'+yr+'-'+crypto.randomUUID().replace(/-/g,'').slice(0,8).toUpperCase();
+      certDraw(env,rec,cv,{verify,qr:PUB()+'verify.html?no='+encodeURIComponent(verify),autoQr:AQ,dm:DM});blob=certPdfBlob(cv,Q);
+      const path=`issued/${batch.id}/${verify}.pdf`;await certUpload(path,new File([blob],verify+'.pdf',{type:'application/pdf'}));const hr=parseFloat(rec.hours);
       const r=await db.from('certificates').insert({verify_no:verify,kind,recipient_name:rec.recipient_name,university_id:rec.university_id||null,title:rec.event_name||'فعالية النادي',hours:isFinite(hr)?hr:null,issued_on:new Date().toISOString().slice(0,10),status:'valid',batch_id:batch.id,template_id:tpl.id,pdf_path:path,issuer_name:ME.name||'نادي الدراسات القضائية والأنظمة'}).select().single();
       if(r.error){try{await db.storage.from(CERT_BUCKET).remove([path])}catch(_){}if(r.error.code==='23505')continue;throw r.error}ins=r.data}
      if(!ins)throw new Error('تعذّر توليد رقم تحقق فريد');
-     await db.from('certificate_audit_log').insert({certificate_id:ins.id,batch_id:batch.id,action:'issued',details:{recipient_name:rec.recipient_name,verify_no:ins.verify_no}});done.push(ins)}
-    catch(e){console.error(e);fails.push({n:L[i],m:e.message||String(e)})}
-    bar.style.width=Math.round((i+1)/L.length*100)+'%'}
+     auditRows.push({certificate_id:ins.id,batch_id:batch.id,action:'issued',details:{recipient_name:rec.recipient_name,verify_no:ins.verify_no,event_date:rec.event_date,dm:DM,qr:AQ,style:rec.style||{}}});
+     if(keepBytes<350e6){ins._blob=blob;keepBytes+=blob.size}done.push(ins)};
+    for(let i=0;i<L.length;i++){if(stop)break;const rec=recOf(L[i]),nm=L[i];
+     const p=one(rec).catch(e=>{console.error(e);fails.push({n:nm,m:e.message||String(e)})}).finally(()=>{inflight.delete(p);nDone++;const el=(Date.now()-t0)/1000,eta=Math.round(el/nDone*(L.length-nDone));bar.style.width=Math.round(nDone/L.length*100)+'%';st.textContent=`تم ${nDone} من ${L.length}${eta?' · المتبقي نحو '+eta+' ث':''}`});
+     inflight.add(p);if(inflight.size>=4)await Promise.race(inflight);await new Promise(r=>setTimeout(r,0))}
+    await Promise.all(inflight);
+    if(auditRows.length){try{await db.from('certificate_audit_log').insert(auditRows)}catch(_){}}
    await db.from('certificate_batches').update({status:'issued',issued_count:done.length,issued_at:new Date().toISOString()}).eq('id',batch.id);
    $('#b-pg').style.display='none';
    $('#b-res').innerHTML=`<div class="box cw-done"><span class="big">${done.length}</span><div>شهادة صادرة من أصل ${L.length}${stop?' (أُوقف الإصدار يدويًا)':''}</div>${fails.length?`<div class="cw-warn" style="text-align:right">تعذّر إصدار ${fails.length}: ${fails.slice(0,6).map(f=>esc(f.n)+' ('+esc(f.m)+')').join('، ')}</div>`:''}<div class="record-actions" style="justify-content:center"><button class="p" id="r-zip">تحميل الشهادات (ZIP)</button><button id="r-list">الشهادات الصادرة</button><button id="r-new">دفعة جديدة</button></div></div>`;
    $('#r-zip').onclick=async()=>{try{toast('جارٍ تجهيز الملف…');await certZipDown(done,'شهادات-'+certSafeName(bn))}catch(e){toast(e.message,6000)}};
    $('#r-list').onclick=()=>{CERT_TAB='issued';certCenter(h||document.getElementById('v'))};$('#r-new').onclick=()=>certIssue(w,h);
-   $('#b-res').scrollIntoView({behavior:'smooth',block:'center'});toast('اكتمل إصدار '+done.length+' شهادة',5000)}
+   $('#b-res').scrollIntoView({behavior:'smooth',block:'center'});toast('اكتمل إصدار '+done.length+' شهادة',5000);if(AUTO&&done.length)certZipDown(done,'شهادات-'+certSafeName(bn))}
   catch(e){console.error(e);$('#b-pg').style.display='none';toast('توقف الإصدار: '+(e.message||e),9000)}
   finally{busy=false;if($('#b-issue'))mark()}};
+ ctl=certStyleCtl($('#b-style'),cr=>{const n=names[idx];if(!n)return cr?{}:null;return cr?(OV[n]=OV[n]||{}):OV[n]},()=>{clearTimeout(tm);tm=setTimeout(draw,120)},()=>(cur().tpl&&cur().tpl.fields)||[],{applyAll:st=>{names.forEach(n=>{OV[n]=structuredClone(st)});draw()}});
  mark();draw()}
 
-async function certIssued(w,h){let C=await db.from('certificates').select('*').order('created_at',{ascending:false}).limit(500).then(ok);const rowH=c=>`<div class="row"><b>${esc(c.recipient_name)}</b><small>${esc(c.title)} · ${esc(c.verify_no)} · ${c.status==='valid'?'سارية':'ملغاة'}</small><div class="record-actions">${c.pdf_path?`<button data-pdf="${c.id}">تحميل PDF</button>`:''}<button data-vlink="${c.verify_no}">رابط التحقق</button>${c.status==='valid'?`<button class="d" data-revoke="${c.id}">إلغاء</button>`:''}</div></div>`;w.innerHTML=`<div class="box"><h3>الشهادات الصادرة (${C.length})</h3><button class="p" id="issued-zip">تحميل جميع ملفات PDF في ZIP</button><input id="issued-q" placeholder="بحث بالاسم أو رقم التحقق"><div id="issued-list">${C.map(rowH).join('')||'لا توجد شهادات صادرة.'}</div></div>`;
- w.querySelector('#issued-zip').onclick=async()=>{try{await certLib('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');const zip=new JSZip(),list=C.filter(c=>c.pdf_path);for(let i=0;i<list.length;i++){const u=await certFileURL(list[i].pdf_path),r=await fetch(u);if(!r.ok)throw new Error('تعذّر تنزيل '+list[i].verify_no);zip.file(certSafeName(list[i].recipient_name)+'-'+list[i].verify_no+'.pdf',await r.blob())}const blob=await zip.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='UQU-certificates.zip';a.click();URL.revokeObjectURL(a.href)}catch(e){toast('تعذّر إنشاء ZIP: '+e.message,6000)}};const bind=()=>{w.querySelectorAll('[data-pdf]').forEach(b=>b.onclick=async()=>{const c=C.find(x=>x.id===b.dataset.pdf);const u=await certFileURL(c.pdf_path);window.open(u,'_blank')});w.querySelectorAll('[data-vlink]').forEach(b=>b.onclick=()=>copyTxt(PUB()+'verify.html?no='+encodeURIComponent(b.dataset.vlink)));w.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{if(!certPerm('certificates_revoke'))return toast('لا تملك صلاحية الإلغاء');const reason=prompt('اكتب سبب إلغاء الشهادة');if(!reason?.trim())return toast('سبب الإلغاء مطلوب');const c=C.find(x=>x.id===b.dataset.revoke);await db.from('certificates').update({status:'revoked',revoked_reason:reason,revoked_at:new Date().toISOString(),revoke_reason:reason}).eq('id',c.id).then(ok);await db.from('certificate_audit_log').insert({certificate_id:c.id,action:'revoked',details:{reason}});toast('تم إلغاء الشهادة');certIssued(w,h)})};bind();w.querySelector('#issued-q').oninput=e=>{const q=e.target.value.trim().toLowerCase();w.querySelector('#issued-list').innerHTML=C.filter(c=>(c.recipient_name+' '+c.verify_no+' '+c.title).toLowerCase().includes(q)).map(rowH).join('')||'لا توجد نتائج.';bind()};
-}
+async function certIssued(w,h){let C=await db.from('certificates').select('*').order('created_at',{ascending:false}).limit(500).then(ok),cur=C;const rowH=c=>`<div class="row"><b>${esc(c.recipient_name)}</b><small>${esc(c.title)} · ${esc(c.verify_no)} · ${c.status==='valid'?'سارية':'ملغاة'}</small><div class="record-actions">${c.pdf_path?`<button data-pdf="${c.id}">⬇ تحميل PDF</button>`:''}${c.pdf_path&&c.status==='valid'?`<button data-edit="${c.id}">✏️ تعديل</button>`:''}<button data-vlink="${c.verify_no}">رابط التحقق</button>${c.status==='valid'?`<button class="d" data-revoke="${c.id}">إلغاء</button>`:''}</div></div>`;w.innerHTML=`<div class="box"><h3>الشهادات الصادرة (${C.length})</h3><button class="p" id="issued-zip">تحميل الظاهر في ZIP</button><small class="hint">يُحمَّل ما يظهر في القائمة حاليًا؛ ابحثي باسم الفعالية لتحميل دفعة محددة بسرعة. ملفات ZIP الكبيرة تُقسَّم تلقائيًا.</small><input id="issued-q" placeholder="بحث بالاسم أو رقم التحقق أو اسم الفعالية"><div id="issued-list">${C.map(rowH).join('')||'لا توجد شهادات صادرة.'}</div></div>`;
+ w.querySelector('#issued-zip').onclick=()=>certZipDown(cur,'UQU-certificates');
+ const bind=()=>{w.querySelectorAll('[data-pdf]').forEach(b=>b.onclick=async()=>{const c=C.find(x=>x.id===b.dataset.pdf);try{await certDownloadOne(c)}catch(e){toast('تعذّر التحميل: '+(e.message||e),5000)}});
+  w.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>certEditOne(C.find(x=>x.id===b.dataset.edit),()=>certIssued(w,h)));
+  w.querySelectorAll('[data-vlink]').forEach(b=>b.onclick=()=>copyTxt(PUB()+'verify.html?no='+encodeURIComponent(b.dataset.vlink)));
+  w.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{if(!certPerm('certificates_revoke'))return toast('لا تملك صلاحية الإلغاء');const reason=prompt('اكتب سبب إلغاء الشهادة');if(!reason?.trim())return toast('سبب الإلغاء مطلوب');const c=C.find(x=>x.id===b.dataset.revoke);await db.from('certificates').update({status:'revoked',revoked_reason:reason,revoked_at:new Date().toISOString(),revoke_reason:reason}).eq('id',c.id).then(ok);await db.from('certificate_audit_log').insert({certificate_id:c.id,action:'revoked',details:{reason}});toast('تم إلغاء الشهادة');certIssued(w,h)})};
+ bind();w.querySelector('#issued-q').oninput=e=>{const q=e.target.value.trim().toLowerCase();cur=C.filter(c=>(c.recipient_name+' '+c.verify_no+' '+c.title).toLowerCase().includes(q));w.querySelector('#issued-list').innerHTML=cur.map(rowH).join('')||'لا توجد نتائج.';bind()}};
+
 async function certVerifyAdmin(w){w.innerHTML=`<div class="box"><h3>صفحة التحقق العامة</h3><p>صفحة التحقق مستقلة عن لوحة الإدارة، وتعرض الاسم ونوع الشهادة والفعالية وتاريخ الإصدار والحالة فقط.</p><a href="./verify.html" target="_blank">فتح صفحة التحقق ↗</a><label>رقم شهادة للتحقق<input id="verify-no"></label><button class="p" id="verify-go">تحقق</button><div id="verify-result"></div></div>`;w.querySelector('#verify-go').onclick=async()=>{const no=w.querySelector('#verify-no').value.trim();const r=await db.rpc('verify_certificate',{p_no:no});if(r.error)return toast(r.error.message);const d=r.data;w.querySelector('#verify-result').innerHTML=d?.found?`<p><b>${esc(d.recipient_name)}</b> — ${d.status==='valid'?'سارية':'ملغاة'}</p><p>${esc(d.title)} · ${esc(d.verify_no)}</p>`:'لم يتم العثور على الشهادة'};}
 async function certAudit(w){const r=await db.from('certificate_audit_log').select('*').order('created_at',{ascending:false}).limit(300);if(r.error)return sqlErr(w,r.error);w.innerHTML=`<div class="box"><h3>سجل عمليات الإصدار</h3>${r.data.map(x=>`<div class="row"><b>${esc(x.action)}</b><small>${new Date(x.created_at).toLocaleString('ar-SA')} · ${esc(x.actor_id||'')}</small><pre style="white-space:pre-wrap">${esc(JSON.stringify(x.details||{},null,2))}</pre></div>`).join('')||'لا توجد عمليات مسجلة.'}</div>`}
 
