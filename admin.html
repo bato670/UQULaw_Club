@@ -194,6 +194,30 @@ html{-webkit-text-size-adjust:100%;}body{overflow-x:hidden;}#app.wrap{max-width:
 
 <style>.tag.int{background:#F4ECDA;color:#7E5F2B;border-color:#A9844B}.pf .row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #DAD5C6}</style>
 <style>.pgtp{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}.pgtp button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 8px;border-radius:12px;text-align:center}.pgtp span{font-size:26px}.pgtp small{opacity:.7;font-size:11.5px}.pgv{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.pgv button.on{background:#0E5E5B;color:#fff;border-color:#0E5E5B}.pgf{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}.pgb>.row{align-items:center}.pgi .box{margin-top:10px}.mrow{display:grid;grid-template-columns:1.2fr 1.6fr auto auto auto;gap:10px;align-items:center}.mck{display:flex;flex-direction:row;align-items:center;gap:6px;white-space:nowrap}.mck input{width:auto}@media(max-width:800px){.pgf,.mrow{grid-template-columns:1fr}}</style>
+<style id="ib-css">
+/* مساحة الإدارة: بطاقات بنفس لغة صفحة التقارير العامة */
+.ib{display:block!important}
+.ib-top{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.ib-top button{border-radius:99px;padding:3px 16px;font-size:14px}.ib-top button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.ib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:20px}
+.ib-card{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:6px 46px 6px 6px;overflow:hidden;transition:transform .3s,box-shadow .3s,border-color .3s}
+.ib-card::before{content:"";position:absolute;z-index:3;top:0;inset-inline:0;height:4px;background:var(--c);transform:scaleX(0);transform-origin:right;transition:transform .4s}
+.ib-card:hover{transform:translateY(-4px);box-shadow:0 26px 40px -30px rgba(8,59,58,.55);border-color:rgba(169,132,75,.65)}.ib-card:hover::before{transform:scaleX(1)}
+.ib-cat{display:flex;align-items:center;gap:8px;padding:7px 16px;background:var(--c);color:#fff;font:600 13.5px var(--text)}
+.ib-cat span{opacity:.85;font-weight:400}.ib-cat span::before{content:"/";margin-inline-end:8px;opacity:.6}
+.ib-card>img,.ib-ph{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.ib-ph{background:linear-gradient(135deg,#083B3A,#0E5E5B);display:grid;align-content:center;padding:0 18px;overflow:hidden}
+.ib-ph span{font:700 32px/1.15 var(--display);color:rgba(255,255,255,.11);white-space:pre-line}
+.ib-bd{padding:16px 18px 6px;display:grid;gap:2px}.ib-m{font-size:13.5px;color:var(--gold-ink);font-weight:500}
+.ib-bd h3{font-size:19px;line-height:1.55;margin:0;color:var(--ink);overflow-wrap:anywhere}.ib-bd p{font-size:14.5px;line-height:1.85;color:var(--mute);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ib-act{display:flex;flex-wrap:wrap;gap:6px;padding:8px 18px 18px;margin-top:auto;align-items:center}.ib-act button{font-size:13px;padding:3px 12px}
+.ib-ar{margin-inline-start:auto;width:40px;height:40px;border-radius:50%!important;padding:0!important;background:var(--teal);color:#fff;font-size:18px!important;display:grid;place-items:center;border:0;transition:background .3s,transform .3s}
+.ib-card:hover .ib-ar{background:var(--gold);transform:translateX(-4px)}
+.ib #editor:has(.editor-empty){display:none}
+.ib #editor:not(:has(.editor-empty)){position:fixed;inset:0;z-index:70;overflow:auto;border-radius:0;border:0;padding:max(18px,env(safe-area-inset-top)) 16px 30px;background:#fbfaf7}
+.ib #editor>*{max-width:880px;margin-inline:auto}
+@media(max-width:600px){.ib-grid{grid-template-columns:minmax(0,1fr);gap:14px}}
+.ix-src{min-height:260px;font-size:14px;line-height:1.9}.ix-help{font-size:13.5px;line-height:1.9;color:var(--mute);background:#FAF8F2;border:1px dashed var(--gold);border-radius:12px;padding:10px 14px}.ix-help code{direction:ltr;unicode-bidi:embed;background:#fff;padding:0 6px;border-radius:6px}
+</style>
 </head>
 <body>
 <div class="wrap" id="app"></div><div id="toast"></div>
@@ -206,7 +230,7 @@ const tFetch=(u,o={})=>{const url=String(u&&u.url||u),ms=/\/storage\/v1\//.test(
 /* لوحة إدارة بمستخدم واحد: نعطّل قفل navigator.locks لأن بقاءه عالقًا بين التبويبات يعلّق getSession() */
 const db=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:async(n,t,fn)=>await fn()},global:{fetch:tFetch}});LOG('SUPABASE_INIT');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ERRM=e=>e?.code=='PGRST116'?'لم يتم العثور على السجل أو لا تملك صلاحية الوصول إليه (RLS)':(e?.code=='42501'||/row-level security/i.test(e?.message||''))?'ليس لديك صلاحية تنفيذ هذه العملية (RLS): '+(e.message||''):(e?.message||String(e));
+const ERRM=e=>/'interactive' column/.test(e?.message||'')?"نفّذ مرة واحدة في Supabase ← SQL Editor:  alter table public.reports add column if not exists interactive jsonb;":e?.code=='PGRST116'?'لم يتم العثور على السجل أو لا تملك صلاحية الوصول إليه (RLS)':(e?.code=='42501'||/row-level security/i.test(e?.message||''))?'ليس لديك صلاحية تنفيذ هذه العملية (RLS): '+(e.message||''):(e?.message||String(e));
 const ok=r=>{if(r.error){const e=r.error;console.error('[supabase]',e);e.message=ERRM(e);e.__shown=true;toast(e.message,6000);throw e}return r.data};
 const okRows=(r,msg)=>{const d=ok(r);if(!Array.isArray(d)||!d.length){const e=new Error(msg||'لم يتم أي تغيير: لا توجد صلاحية أو السجل غير موجود (RLS)');e.__shown=true;toast(e.message,6000);throw e}return d};
 window.addEventListener('unhandledrejection',e=>{e.preventDefault();console.error('[unhandled]',e.reason);if(!e.reason?.__shown)toast('حدث خطأ: '+(e.reason?.message||e.reason||'غير معروف'),6000)});
@@ -236,6 +260,7 @@ F.partnerships={n:'الشراكات',f:[...COMMON,['parent_org','الجهة ال
 F.member_directory={n:'دليل الأعضاء',f:[['title','الاسم *','text'],['committee','اللجنة','dept'],['role_title','المسمى','text'],['photo_url','الصورة','img'],['linkedin','LinkedIn (اسم المستخدم)','text'],['x_handle','X (اسم المستخدم)','text']]};
 F.achievements={n:'الإنجازات',f:[...COMMON,['team','الجهة / الفريق','text'],['achieved_at','التاريخ','date'],['committee','اللجنة المسؤولة','dept'],['description','الوصف','ta'],['image_url','صورة الإنجاز','img'],['proof_url','رابط الإثبات','text'],['category','التصنيف','sel',['','إنجاز','تكريم','مشاركة','شراكة']],['tags','وسوم (مفصولة بفاصلة)','text']]};
 ['events','news','articles','library_items','reports','partnerships','achievements'].forEach(k=>F[k].f.push(['style','الشكل والخلفية (اختر قبل النشر)','style']));
+F.reports.f.splice(F.reports.f.findIndex(x=>x[0]=='style'),0,['interactive','التقرير التفاعلي (اختياري): يظهر للزوار بتصميم تفاعلي بدل الصفحة العادية','json']);
 F.internal_items={n:'مساحة الإدارة',f:[['title','العنوان *','text'],['category','النوع','sel',['','تصميم Canva','رابط','وثيقة','محضر','أخرى']],['description','الوصف / ملاحظات','ta'],['link_url','الرابط (مثل رابط تصميم Canva)','text'],['files','ملفات خاصة (لا تظهر للعامة أبدًا)','pf']]};
 const TABS=['overview',...Object.keys(F),'forms','pages','menuAdmin','structure','departments','requests','homeSettings','statsSettings','site','footer','certificatesCenter'],TN={overview:'نظرة عامة',departments:'اللجان والأقسام',hr:'الموارد البشرية',staff:'حسابات الإدارة والصلاحيات',forms:'النماذج',pages:'الصفحات المخصصة',menuAdmin:'قائمة الموقع',...Object.fromEntries(Object.entries(F).map(([k,v])=>[k,v.n])),structure:'الهيكلة والأعضاء',requests:'طلبات الانضمام',homeSettings:'إعدادات الصفحة الرئيسية',statsSettings:'إحصاءات الموقع',site:'نصوص الموقع',footer:'التذييل',certificatesCenter:'مركز إصدار الشهادات'};
 let tab='overview',HR=null;
@@ -261,7 +286,8 @@ const SEL=[['badge','الشارة'],['image','الصورة'],['date','التار
 const isDark=h=>{const n=parseInt((h||'#fff').slice(1),16);return ((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/1000<140};
 function drawJson(box){
  const k=box.dataset.k,ta=box.parentElement.querySelector('textarea[name="'+k+'"]');
- let D;try{D=JSON.parse(ta.value||'[]');if(!Array.isArray(D))D=[]}catch(_){D=[]}
+ if(k=='interactive')return drawIx(box,ta);
+  let D;try{D=JSON.parse(ta.value||'[]');if(!Array.isArray(D))D=[]}catch(_){D=[]}
  const BT={text:'نص',cutout:'صورة بجانب النص',wide:'صورة عريضة',quote:'اقتباس',gallery:'معرض صور'};
  const upl=async f=>{const p=`${Date.now()}-${rid()}.${(f.name.split('.').pop()||'jpg').toLowerCase()}`;await db.storage.from('media').upload(p,f,{contentType:f.type}).then(ok);return db.storage.from('media').getPublicUrl(p).data.publicUrl};
  const sync=()=>{ta.value=JSON.stringify(D,null,1)};
@@ -810,7 +836,7 @@ function formView(r){const v=document.getElementById('editor')||document.getElem
   t=='att'?`<div class="att"></div><button type="button" id="addat">+ إضافة مرفق (رابط / ملف / صورة / فيديو / نص)</button>`:
   t=='sel'?`<select name="${k}">${o.map(x=>`<option value="${x}" ${r[k]==x?'selected':''}>${x||'— اختر —'}</option>`).join('')}</select>`:
   t=='style'?`<input type="hidden" name="${k}" value="${esc(JSON.stringify(r[k]||{}))}"><div class="stylepick"></div>`:
-  t=='json'&&['blocks','highlights','contents'].includes(k)?`<textarea name="${k}" rows="7" dir="ltr" style="display:none">${esc(JSON.stringify(r[k]??[],null,1))}</textarea><div class="jsonedit" data-k="${k}"></div>`:   t=='json'?`<textarea name="${k}" rows="7" dir="ltr">${esc(JSON.stringify(r[k]??(k=='blocks'||k=='highlights'||k=='contents'?[]:null),null,1))}</textarea>`:
+  t=='json'&&['blocks','highlights','contents','interactive'].includes(k)?`<textarea name="${k}" rows="7" dir="ltr" style="display:none">${esc(JSON.stringify(r[k]??[],null,1))}</textarea><div class="jsonedit" data-k="${k}"></div>`:   t=='json'?`<textarea name="${k}" rows="7" dir="ltr">${esc(JSON.stringify(r[k]??(k=='blocks'||k=='highlights'||k=='contents'?[]:null),null,1))}</textarea>`:
   (t=='img'||t=='file')?`<input name="${k}" value="${esc(r[k])}" dir="ltr" placeholder="رابط الملف"><input type="file" data-k="${k}" data-b="${t=='img'?'media':'files'}" accept="${t=='img'?'image/*':'.pdf'}">`:
   `<input name="${k}" type="${t}" ${t=='number'?'step="any" ':''}value="${esc(r[k])}">`}</label>`).join('')}
   <label>الحالة<select name="status">${stFor().map(s=>`<option value="${s}" ${(r.status||'draft')==s?'selected':''}>${SL[s]}</option>`).join('')}</select>${tab!='internal_items'&&canPub()?'<small>«منشورة للإدارة»: لا تظهر للزوار وتظهر لأصحاب صلاحية الاطلاع فقط. الصور والملفات المرفوعة هنا تُحفظ في مخزن عام، فللملفات السرية استخدمي «مساحة الإدارة».</small>':''}</label>
@@ -861,7 +887,7 @@ function formView(r){const v=document.getElementById('editor')||document.getElem
   if(!o.slug&&tab!='expenses')o.slug=rid();if(tab=='expenses'&&!r.id)o.added_by_name=ME.name||'';
   form.dataset.busy=1;if(btn){btn.disabled=true;btn.dataset.t=btn.textContent;btn.textContent='جارٍ الحفظ…'}
   const AUTO=['status','slug','added_by_name','style','section','event_name','invoice_no','payment_method'],dropped=[];let done=false;
-  try{const payload={...o};
+  try{const payload={...o};if(tab=='reports'&&Array.isArray(payload.interactive)&&!payload.interactive.length&&!(r.interactive&&r.interactive.length))delete payload.interactive;
    for(let n=0;n<9&&!done;n++){
     const res=await(r.id?db.from(tab).update(payload).eq('id',r.id).select('id'):db.from(tab).insert(payload));
     if(res.error){const m=/Could not find the '([^']+)' column/.exec(res.error.message||'');if(m&&AUTO.includes(m[1])&&(['style','section','event_name','invoice_no','payment_method'].includes(m[1])||!fs.some(x=>x[0]==m[1]))){delete payload[m[1]];dropped.push(m[1]);continue}res.error.message=ERRM(res.error);throw res.error}
@@ -881,13 +907,36 @@ function internalView(r,tbl){tbl=tbl||tab;const v=document.getElementById('edito
   return isU(x)?`<a href="${esc(x)}" target="_blank" rel="noopener" dir="ltr">${esc(x)}</a>`:`<span style="white-space:pre-wrap">${esc(x)}</span>`};
  v.innerHTML=`<div class="editor-heading"><div><p class="eyebrow">عرض فقط · ${esc(F[tbl].n)}</p><h3>${esc(r.title||'بدون عنوان')}</h3></div><span class="tag ${stCls(r.status)}">${SL[r.status]||''}</span></div>${fs.map(([k,l,ty])=>{const h=val(k,ty);return h&&k!='title'?`<div class="box"><small>${esc(String(l).replace(/\s*\*$/,'').replace(/\s*[—(].*$/,''))}</small><div>${h}</div></div>`:''}).join('')}<div class="editor-actions"><button type="button" id="ivx">إغلاق</button></div>`;
  v.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>pfOpen(b.dataset.sp));document.getElementById('ivx').onclick=()=>{v.innerHTML='<div class="editor-empty"><span>✎</span><b>اختاري عنصرًا لعرضه</b></div>'};v.scrollIntoView({behavior:'smooth',block:'start'})}
+const CATS={events:['فعاليات','#7E5F2B'],news:['أخبار','#0E5E5B'],reports:['تقارير','#083B3A'],articles:['مجلة','#1F7A6D'],library_items:['مكتبة','#8A6A2F'],partnerships:['شراكات','#4F6A68'],achievements:['إنجازات','#A9844B'],internal_items:['مساحة الإدارة','#12302F']};
+const ibDate=d=>{try{return new Date(d).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric',calendar:'gregory'})}catch(_){return ''}};
 async function internalOthers(v){const T=['events','news','articles','library_items','reports','partnerships','achievements'];
- const rs=await Promise.all(T.map(t=>db.from(t).select('id,title,created_at').eq('status','internal').order('created_at',{ascending:false}).then(r=>({t,rows:r.error?[]:(r.data||[])}))));
- const g=rs.filter(x=>x.rows.length),box=document.createElement('div');box.className='box';
- box.innerHTML='<h3>محتوى الأقسام المنشور «للإدارة» فقط</h3>'+(g.length?g.map(x=>`<p><b>${esc(F[x.t].n)}</b></p>`+x.rows.map(y=>`<div class="row"><span>${esc(y.title||'بدون عنوان')}</span><span class="record-actions"><button type="button" data-v="${x.t}|${y.id}">عرض</button>${can(x.t)&&canPub()?`<button type="button" data-o="${x.t}|${y.id}">تعديل</button>`:''}</span></div>`).join('')).join(''):'<p class="empty-state">لا يوجد محتوى منشور للإدارة في الأقسام الأخرى.</p>');
- v.appendChild(box);
- box.querySelectorAll('[data-v]').forEach(b=>b.onclick=async()=>{const[t_,id]=b.dataset.v.split('|');const r=await db.from(t_).select('*').eq('id',id).single().then(ok);internalView(r,t_)});
- box.querySelectorAll('[data-o]').forEach(b=>b.onclick=async()=>{const[t_,id]=b.dataset.o.split('|');tab=t_;await shell();await list(id)})}
+ const rs=await Promise.all(['internal_items',...T].map(t=>{let q=db.from(t).select('*');if(t!='internal_items')q=q.eq('status','internal');return q.order('created_at',{ascending:false}).then(r=>({t,rows:r.error?[]:(r.data||[])}))}));
+ const items=rs.flatMap(x=>x.rows.map(r=>({t:x.t,r}))).sort((p,q)=>String(q.r.created_at||'').localeCompare(String(p.r.created_at||'')));
+ const lay=v.querySelector('.manage-layout'),ed=v.querySelector('#editor');if(!lay)return;
+ const cnt={};items.forEach(x=>cnt[x.t]=(cnt[x.t]||0)+1);const sm=v.querySelector('.manage-head small');if(sm)sm.textContent=items.length+' عنصرًا مسجلًا';
+ const card=({t,r})=>{const[cn,col]=CATS[t],own=t=='internal_items',cv=r.cover_url||r.logo_url||r.image_url||r.photo_url,dt=r.event_date||r.news_date||r.achieved_at||r.year,ds=String(r.description||r.excerpt||r.body||'').replace(/<[^>]*>/g,'').trim().slice(0,140),ce=own?canPub():(can(t)&&canPub());
+  return `<article class="ib-card" data-t="${t}" style="--c:${col}"><div class="ib-cat"><b>${cn}</b>${own&&r.category?`<span>${esc(r.category)}</span>`:''}</div>${cv?`<img src="${esc(cv)}" alt="" loading="lazy">`:`<div class="ib-ph" aria-hidden="true"><span>${cn}\n${cn}\n${cn}</span></div>`}<div class="ib-bd"><span class="ib-m">${esc(dt?(String(dt).length>5?ibDate(dt):dt):ibDate(r.created_at))} · <span class="tag ${stCls(r.status)}">${SL[r.status]||'مسودة'}</span></span><h3>${esc(r.title||'بدون عنوان')}</h3>${ds?`<p>${esc(ds)}</p>`:''}</div><div class="ib-act">${ce?`<button type="button" data-o="${t}|${r.id}">تعديل</button>`:''}${own&&canPub()?`<button type="button" data-tg="${r.id}|${r.status||'draft'}">${stBtn(r.status)}</button><button type="button" class="d" data-dl="${r.id}">حذف</button>`:''}<button type="button" class="ib-ar" data-v="${t}|${r.id}" aria-label="عرض ${esc(r.title||'')}">←</button></div></article>`};
+ lay.className='manage-layout ib';
+ lay.innerHTML=`<div class="ib-top"><button type="button" class="on" data-f="">الكل · ${items.length}</button>${Object.keys(cnt).map(t=>`<button type="button" data-f="${t}">${CATS[t][0]} · ${cnt[t]}</button>`).join('')}</div>${items.length?`<div class="ib-grid">${items.map(card).join('')}</div>`:'<p class="empty-state">لا يوجد محتوى بعد. ابدأ بإضافة أول عنصر، أو انشر محتوى أي قسم بحالة «منشورة للإدارة» ليظهر هنا.</p>'}`;
+ if(ed)lay.appendChild(ed);
+ lay.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{lay.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x==b));lay.querySelectorAll('.ib-card').forEach(c=>c.hidden=!!b.dataset.f&&c.dataset.t!=b.dataset.f)});
+ lay.querySelectorAll('[data-v]').forEach(b=>b.onclick=async()=>{const[t_,id]=b.dataset.v.split('|');const r=await db.from(t_).select('*').eq('id',id).single().then(ok);internalView(r,t_)});
+ lay.querySelectorAll('[data-o]').forEach(b=>b.onclick=async()=>{const[t_,id]=b.dataset.o.split('|');if(t_=='internal_items'){const r=await db.from(t_).select('*').eq('id',id).single().then(ok);formView(r)}else{tab=t_;await shell();await list(id)}});
+ lay.querySelectorAll('[data-tg]').forEach(b=>b.onclick=async()=>{const[id,s]=b.dataset.tg.split('|');await db.from('internal_items').update({status:stNext(s)}).eq('id',id).select('id').then(r=>okRows(r));list()});
+ lay.querySelectorAll('[data-dl]').forEach(b=>b.onclick=async()=>{if(!await askDel('هل تريد حذف هذا العنصر نهائيًا؟',{strong:true}))return;await db.from('internal_items').delete().eq('id',b.dataset.dl).select('id').then(r=>okRows(r));toast('تم الحذف');list()})}
+
+/* ---- محرر التقرير التفاعلي (صيغة نصية بسيطة ⇄ JSON) ---- */
+const IXT={text:'نص',stats:'أرقام',bars:'أعمدة',donut:'دائري',timeline:'خط زمني',tabs:'تبويبات',quote:'اقتباس'},IXR=Object.fromEntries(Object.entries(IXT).map(([k,v])=>[v,k]));
+const ixToText=D=>D.map(s=>'## '+(IXT[s.type]||s.type)+' | '+(s.title||'')+'\n'+(s.type=='text'||s.type=='quote'?(s.text||''):(s.items||[]).map(i=>s.type=='timeline'?[i.d,i.t,i.x].join(' | '):s.type=='tabs'?[i.t,i.x].join(' | '):i.l+' = '+i.v).join('\n'))).join('\n\n');
+const ixFromText=t=>('\n'+t).split(/\n## /).slice(1).map(b=>{const[h,...rest]=b.split('\n'),[ty,...ti]=h.split('|'),type=IXR[ty.trim()]||'text',title=ti.join('|').trim(),L=rest.join('\n').trim();
+ if(type=='text'||type=='quote')return{type,title,text:L};
+ const items=L.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>{if(type=='timeline'){const[d,t_,...p]=x.split('|');return{d:(d||'').trim(),t:(t_||'').trim(),x:p.join('|').trim()}}
+  if(type=='tabs'){const[t_,...p]=x.split('|');return{t:t_.trim(),x:p.join('|').trim()}}const k=x.lastIndexOf('=');return k<0?{l:x,v:''}:{l:x.slice(0,k).trim(),v:x.slice(k+1).trim()}});return{type,title,items}});
+const IXSAMPLE='## أرقام | العام في أرقام\nفعالية = 42\nمستفيد = 1,800\nرضا الحضور = 96%\n\n## أعمدة | الحضور حسب الشهر\nمحرم = 120\nصفر = 210\nربيع الأول = 340\n\n## دائري | توزيع الفعاليات\nورش = 18\nملتقيات = 9\nمحاضرات = 15\n\n## خط زمني | محطات العام\nمحرم | الانطلاق | افتتاح العام بحفل التأسيس\nرجب | الملتقى السنوي | أكبر فعاليات النادي\n\n## تبويبات | عن البرامج\nالورش | تدريب عملي على مهارات المحاماة\nالملتقيات | لقاءات مع قضاة ومحامين\n\n## اقتباس |\nعبارة مختصرة تلخص أثر العام.\n\n## نص | الخلاصة\nفقرة ختامية عن حصاد العام.';
+function drawIx(box,ta){let D=[];try{D=JSON.parse(ta.value||'[]');if(!Array.isArray(D))D=[]}catch(_){}
+ box.innerHTML=`<details class="ix-help"><summary>كيف أكتب التقرير التفاعلي؟</summary><p>اكتب كل قسم بسطر عنوانه <code>## النوع | العنوان</code> ثم محتواه. الأنواع: <b>أرقام</b> و<b>أعمدة</b> و<b>دائري</b> (سطر لكل عنصر: <code>الاسم = القيمة</code>)، <b>خط زمني</b> (<code>التاريخ | العنوان | الوصف</code>)، <b>تبويبات</b> (<code>العنوان | النص</code>)، <b>اقتباس</b> و<b>نص</b> (فقرة حرة). أرقام الغلاف تؤخذ من حقل «أبرز الأرقام». اتركه فارغًا لعرض التقرير بشكله المعتاد.</p></details><textarea class="ix-src" rows="14" placeholder="## أرقام | العام في أرقام&#10;فعالية = 42">${esc(ixToText(D))}</textarea><div class="je-row"><button type="button" data-ixs>إدراج قالب جاهز</button><small data-ixc></small></div>`;
+ const src=box.querySelector('.ix-src'),c=box.querySelector('[data-ixc]'),sync=()=>{const v=ixFromText(src.value);ta.value=JSON.stringify(v);c.textContent=v.length?v.length+' أقسام':''};
+ src.oninput=sync;box.querySelector('[data-ixs]').onclick=()=>{if(src.value.trim()&&!confirm('سيُستبدل النص الحالي بالقالب. متابعة؟'))return;src.value=IXSAMPLE;sync()};sync()}
 
 /* ---- منشئ الصفحات + قائمة الموقع ---- */
 const BD={
