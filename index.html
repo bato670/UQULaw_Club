@@ -791,7 +791,7 @@ nav a.cur{color:var(--teal);border-bottom-color:var(--gold)}
 .ix-pe .pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 .pc{position:relative;display:grid;gap:4px;align-content:start;background:#fff;border:1px solid var(--line);border-top:4px solid var(--k);border-radius:6px 34px 6px 6px;padding:20px 20px 22px;transition:transform .25s,box-shadow .25s}.pc[hidden]{display:none}.pc:hover{transform:translateY(-3px);box-shadow:0 22px 34px -26px rgba(8,59,58,.55)}
 .pc i{font-style:normal;display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--d);color:var(--gl);font:700 28px/1 var(--display);box-shadow:0 0 0 4px #fff,0 0 0 6px var(--k);margin-bottom:10px}
-.pc em{font-style:normal;justify-self:start;font-size:13px;font-weight:600;color:#fff;background:var(--k);border-radius:99px;padding:0 12px}.pc b{font-size:18px;line-height:1.6;margin-top:4px}.pc p{color:var(--mute);font-size:14.5px;line-height:1.85}
+.pc img{width:84px;height:84px;border-radius:50%;object-fit:cover;background:#ece7d9;box-shadow:0 0 0 4px #fff,0 0 0 6px var(--k);margin-bottom:10px}.pc em{font-style:normal;justify-self:start;font-size:13px;font-weight:600;color:#fff;background:var(--k);border-radius:99px;padding:0 12px}.pc b{font-size:18px;line-height:1.6;margin-top:4px}.pc p{color:var(--mute);font-size:14.5px;line-height:1.85}
 @media(prefers-reduced-motion:reduce){.pc{transition:none}}
 </style>
 </head>
@@ -799,7 +799,7 @@ nav a.cur{color:var(--teal);border-bottom-color:var(--gold)}
 <header><div class="wrap nav">
 <a href="#/" class="brand"><span class="logo" role="img" aria-label="شعار نادي الدراسات القضائية والأنظمة"></span><span>نادي الدراسات القضائية والأنظمة</span></a>
 <button class="menu" onclick="document.querySelector('nav ul').classList.toggle('open')">القائمة</button>
-<nav><ul onclick="this.classList.remove('open')"><li><a href="#/">الرئيسية</a></li><li><a href="#/about">من نحن</a></li><li><a href="#/news">الأخبار</a></li><li><a href="#/events">الفعاليات</a></li><li><a href="#/articles">المقالات</a></li><li><a href="#/library">مكتبة النادي</a></li><li><a href="#/reports">تقارير النادي</a></li><li><a href="#/members">دليل الأعضاء</a></li><li><a href="#/partners">الشراكات</a></li><li><a href="#/achievements">الإنجازات</a></li></ul></nav>
+<nav><ul onclick="this.classList.remove('open')"><li><a href="#/">الرئيسية</a></li><li><a href="#/about">من نحن</a></li><li><a href="#/news">الأخبار</a></li><li><a href="#/events">الفعاليات</a></li><li><a href="#/calendar">التقويم</a></li><li><a href="#/articles">المقالات</a></li><li><a href="#/library">مكتبة النادي</a></li><li><a href="#/reports">تقارير النادي</a></li><li><a href="#/members">دليل الأعضاء</a></li><li><a href="#/partners">الشراكات</a></li><li><a href="#/achievements">الإنجازات</a></li></ul></nav>
 <div class="nav-actions" aria-label="روابط المنصة"><a class="nav-icon x" href="https://x.com/uqu_law_club?s=11" target="_blank" rel="noopener" aria-label="منصة X" title="منصة X"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a class="nav-icon login" href="admin.html" aria-label="تسجيل الدخول" title="تسجيل الدخول"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg></a></div>
 <form class="sf" style="display:flex;background:none;border:0;padding:0;border-radius:0" onsubmit="event.preventDefault();var v=this.q.value.trim();if(v)go('/search/'+encodeURIComponent(v))"><input name="q" placeholder="بحث" aria-label="بحث"><button>بحث</button></form>
 </div></header>
@@ -1076,7 +1076,7 @@ function ixSec(s){const I=s.items||[];switch(s.type){
  case 'timeline':return `<div class="ix-tl">${I.map((i,k)=>`<details${k?'':' open'}><summary><em>${esc(i.d)}</em><span>${esc(i.t)}</span></summary>${i.x?`<p>${esc(i.x)}</p>`:''}</details>`).join('')}</div>`;
  case 'tabs':return `<div class="ix-tabs"><div class="tb" role="tablist">${I.map((i,k)=>`<button type="button" role="tab" aria-selected="${!k}" data-k="${k}">${esc(i.t)}</button>`).join('')}</div>${I.map((i,k)=>`<div class="tp" role="tabpanel"${k?' hidden':''}>${body(i.x)}</div>`).join('')}</div>`;
  case 'people':{const C=[...new Set(I.map(i=>i.c))],ini=n=>String(n).replace(/^(أ\.د\.|أ\.|د\.)\s*/,'').trim().charAt(0);
-  return `<div class="ix-pe">${C.length>1&&I.length>6?`<div class="pf">${['',...C].map((c,k)=>`<button type="button" data-c="${esc(c)}"${k?'':' class="on"'}>${k?esc(c):'الكل'}</button>`).join('')}</div>`:''}<div class="pg">${I.map(i=>`<article class="pc" data-c="${esc(i.c)}" style="--k:${IXC[C.indexOf(i.c)%8]}"><i aria-hidden="true">${esc(ini(i.n))}</i><em>${esc(i.c)}</em><b>${esc(i.n)}</b>${i.x?`<p>${esc(i.x)}</p>`:''}</article>`).join('')}</div></div>`}
+  return `<div class="ix-pe">${C.length>1&&I.length>5?`<div class="pf">${['',...C].map((c,k)=>`<button type="button" data-c="${esc(c)}"${k?'':' class="on"'}>${k?esc(c):'الكل'}</button>`).join('')}</div>`:''}<div class="pg">${I.map(i=>`<article class="pc" data-c="${esc(i.c)}" style="--k:${IXC[C.indexOf(i.c)%8]}">${/^https?:\/\//i.test(i.p||'')?`<img src="${esc(i.p)}" alt="" loading="lazy">`:`<i aria-hidden="true">${esc(ini(i.n))}</i>`}<em>${esc(i.c)}</em><b>${esc(i.n)}</b>${i.x?`<p>${esc(i.x)}</p>`:''}</article>`).join('')}</div></div>`}
  case 'quote':return `<blockquote class="ix-q">${esc(s.text)}</blockquote>`;
  default:return `<div style="max-width:720px">${body(s.text)}</div>`}}
 function ixPage(r){const S=r.interactive,H=r.highlights||[];
@@ -1185,6 +1185,119 @@ async function route(){const p=location.hash.replace(/^#\/?/,'').split('/').filt
   try{await(pages[p[0]||'home']||pages.home)(p);carDots();LOG('ROUTER_DONE');if(!window.__ready){window.__ready=true;LOG('APP_READY')}}
   catch(err){console.error(TAG,err);if(my===window._rt)app.innerHTML='<div class="wrap" style="text-align:center;padding:60px 0"><p>تعذّر تحميل المحتوى. تحقق من الاتصال ثم أعد المحاولة.</p><p><button class="btn g" onclick="route()">إعادة المحاولة</button></p></div>'}scrollTo(0,0)}
 const go=u=>{const h='#'+u;if(location.hash===h)route();else location.hash=h};
+/* ===== إضافات الموقع: التقويم + مساعد النادي ===== */
+(()=>{
+const css=document.createElement('style');css.textContent=`
+body[data-r=calendar] a[href="#/calendar"]{border-color:var(--gold)}
+/* التقويم */
+.cal-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.cal-top h3{font-size:22px;color:var(--teal)}.cal-top .cb{display:flex;gap:8px}
+.cal-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 14px;font:600 14px "IBM Plex Sans Arabic";cursor:pointer;color:var(--ink);transition:.2s}.cal-btn:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal-wd{text-align:center;font-weight:700;font-size:13px;color:var(--mute);padding:6px 0}
+.cal-d{min-height:92px;border:1px solid var(--line);border-radius:12px;padding:6px;background:#fff;cursor:pointer;text-align:start;display:flex;flex-direction:column;gap:3px;transition:.2s;font:inherit;color:inherit;overflow:hidden}
+.cal-d:hover{border-color:var(--gold);transform:translateY(-2px)}.cal-d.off{background:transparent;border-color:transparent;cursor:default;pointer-events:none}
+.cal-d.today{border:2px solid var(--gold);background:#fffaf0}.cal-d.sel{background:var(--teal);color:#fff;border-color:var(--teal)}
+.cal-d b{font-size:14px}.cal-d .ec{font-size:11px;line-height:1.4;background:color-mix(in srgb,var(--teal) 12%,#fff);color:var(--deep);border-radius:6px;padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-d.sel .ec{background:rgba(255,255,255,.2);color:#fff}.cal-d .dot{display:none;width:7px;height:7px;border-radius:50%;background:var(--gold)}
+@media(max-width:700px){.cal-d{min-height:54px;align-items:center}.cal-d .ec{display:none}.cal-d .dot{display:block}}
+.cal-ev{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:12px;background:#fff;border-inline-start:5px solid var(--gold)}
+.cal-ev h4{font-size:17px}.cal-ev .ac{display:flex;gap:8px;flex-wrap:wrap}.cal-ev .ac a,.cal-ev .ac button{font-size:13px}
+.cal-sub{background:linear-gradient(135deg,var(--deep),var(--teal));color:#fff;border-radius:18px;padding:18px 20px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:22px 0}
+.cal-sub .cal-btn{background:var(--gold);border-color:var(--gold);color:#1B1408}
+/* المساعد */
+#cb-fab{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:60;width:56px;height:56px;border-radius:50%;border:2px solid var(--gold);background:var(--deep);color:#fff;font-size:26px;cursor:pointer;box-shadow:0 12px 28px -8px rgba(0,0,0,.45);display:grid;place-items:center;transition:.25s}
+#cb-fab:hover{transform:scale(1.08) rotate(-6deg)}#cb-fab::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--gold);opacity:.6;animation:cbp 2.4s infinite}
+@keyframes cbp{to{transform:scale(1.35);opacity:0}}
+#cb{position:fixed;left:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:61;width:min(380px,calc(100vw - 32px));height:min(540px,calc(100vh - 140px));background:#fff;border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:20px;box-shadow:0 30px 60px -20px rgba(0,0,0,.45);display:none;flex-direction:column;overflow:hidden}
+#cb.on{display:flex;animation:cbin .3s}@keyframes cbin{from{opacity:0;transform:translateY(14px) scale(.97)}}
+#cb .h{background:var(--deep);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}#cb .h b{font-family:Cairo,sans-serif}#cb .h small{display:block;color:#bcd5d1;font-size:11px}
+#cb .h button{background:none;border:0;color:#fff;font-size:20px;cursor:pointer}
+#cb .m{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#faf8f2}
+#cb .b{max-width:88%;padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.8;animation:cbin .25s}
+#cb .b.bot{background:#fff;border:1px solid var(--line);border-end-start-radius:4px;align-self:flex-start}#cb .b.me{background:var(--teal);color:#fff;align-self:flex-end;border-end-end-radius:4px}
+#cb .b a{color:var(--teal);font-weight:700;text-decoration:underline}#cb .b ul{margin:6px 18px 0;padding:0}
+#cb .q{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line);background:#fff}
+#cb .q button{border:1px solid var(--gold);background:#fff;border-radius:99px;padding:3px 11px;font:600 12px "IBM Plex Sans Arabic";cursor:pointer;color:var(--ink)}#cb .q button:hover{background:var(--gold)}
+#cb form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line);background:#fff}#cb form input{flex:1;border-radius:99px}#cb form button{border:0;background:var(--teal);color:#fff;border-radius:99px;padding:0 16px;cursor:pointer;font-weight:700}
+.cb-dots i{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:var(--mute);animation:cbd 1s infinite}.cb-dots i:nth-child(2){animation-delay:.15s}.cb-dots i:nth-child(3){animation-delay:.3s}@keyframes cbd{50%{transform:translateY(-5px);opacity:.4}}
+`;document.head.appendChild(css);
+
+const dk=v=>String(v||'').slice(0,10),pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today=()=>ymd(new Date());
+/* ---------- التقويم ---------- */
+const icsEsc=s=>String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+const evUrl=x=>location.href.split('#')[0]+'#/events/'+encodeURIComponent(x.slug||x.id);
+const evDesc=x=>x.summary||x.excerpt||x.description||x.subtitle||'';
+const evLoc=x=>x.location||x.venue||x.place||'';
+const nextDay=d=>{const e=new Date(dk(d)+'T00:00:00');e.setDate(e.getDate()+1);return ymd(e).replace(/-/g,'')};
+const icsOf=list=>{const now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,''),L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//UQU Law Club//AR','CALSCALE:GREGORIAN','X-WR-CALNAME:فعاليات نادي الدراسات القضائية والأنظمة'];
+ list.forEach(x=>{const d=dk(x.event_date);if(!d)return;L.push('BEGIN:VEVENT','UID:ev'+x.id+'@uqulaw.club','DTSTAMP:'+now,'DTSTART;VALUE=DATE:'+d.replace(/-/g,''),'DTEND;VALUE=DATE:'+nextDay(d),'SUMMARY:'+icsEsc(x.title),'DESCRIPTION:'+icsEsc(evDesc(x)+' '+evUrl(x)),'URL:'+evUrl(x));if(evLoc(x))L.push('LOCATION:'+icsEsc(evLoc(x)));L.push('BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:تذكير بالفعالية','END:VALARM','END:VEVENT')});
+ L.push('END:VCALENDAR');return L.join('\r\n')};
+const dlFile=(n,t)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/calendar;charset=utf-8'}));a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)};
+const gcal=x=>'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(x.title||'')+'&dates='+dk(x.event_date).replace(/-/g,'')+'/'+nextDay(x.event_date)+'&details='+encodeURIComponent(evDesc(x)+'\n'+evUrl(x))+'&location='+encodeURIComponent(evLoc(x));
+pages.calendar=async()=>{
+ let ev=[];try{ev=(await pub('events',500)).filter(x=>dk(x.event_date))}catch(e){console.error(e)}
+ const by={};ev.forEach(x=>(by[dk(x.event_date)]=by[dk(x.event_date)]||[]).push(x));
+ let cur=new Date();cur.setDate(1);let sel=today();
+ const WD=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+ const evCard=x=>`<div class="cal-ev"><div><h4><a href="#/events/${esc(x.slug||x.id)}">${esc(x.title)}</a></h4><small class="mute">📅 ${esc(fd(x.event_date))}${evLoc(x)?' · 📍 '+esc(evLoc(x)):''}</small></div><div class="ac"><a class="cal-btn" target="_blank" rel="noopener" href="${esc(gcal(x))}">+ Google</a><button class="cal-btn" data-ics="${esc(x.id)}">⬇ تقويم الجوال (ICS)</button></div></div>`;
+ const draw=()=>{
+  const y=cur.getFullYear(),m=cur.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+  let cells='';for(let i=0;i<first;i++)cells+='<div class="cal-d off"></div>';
+  for(let d=1;d<=days;d++){const k=y+'-'+pad(m+1)+'-'+pad(d),L=by[k]||[];cells+=`<button class="cal-d${k==today()?' today':''}${k==sel?' sel':''}" data-day="${k}" aria-label="${d} ${L.length?L.length+' فعاليات':''}"><b>${d}</b>${L.slice(0,2).map(x=>`<span class="ec">${esc(x.title)}</span>`).join('')}${L.length>2?`<span class="ec">+${L.length-2}</span>`:''}${L.length?'<i class="dot"></i>':''}</button>`}
+  const up=ev.filter(x=>dk(x.event_date)>=today()).sort((a,b)=>dk(a.event_date)<dk(b.event_date)?-1:1),sd=by[sel]||[];
+  document.getElementById('cal').innerHTML=`<div class="cal-top"><h3>${cur.toLocaleDateString('ar-SA',{month:'long',year:'numeric',calendar:'gregory'})}</h3><div class="cb"><button class="cal-btn" data-nav="1" aria-label="الشهر السابق">›</button><button class="cal-btn" data-nav="0">اليوم</button><button class="cal-btn" data-nav="-1" aria-label="الشهر التالي">‹</button></div></div><div class="cal-grid">${WD.map(w=>`<div class="cal-wd">${w}</div>`).join('')}${cells}</div>
+  <h3 style="margin:26px 0 12px;color:var(--teal)">${sel==today()?'فعاليات اليوم':'فعاليات '+esc(fd(sel))}</h3>${sd.length?sd.map(evCard).join(''):'<p class="mute">لا توجد فعاليات في هذا اليوم.</p>'}
+  <div class="cal-sub"><div><b style="font-size:17px">📲 لا تفوّتي أي فعالية</b><div style="font-size:13px;opacity:.9">حمّلي تقويم النادي كاملًا وأضيفيه لتقويم جوالك، مع تذكير قبل كل فعالية بيوم.</div></div><button class="cal-btn" data-all="1">⬇ تقويم كل الفعاليات القادمة (${up.length})</button></div>
+  <h3 style="margin:10px 0 12px;color:var(--teal)">الفعاليات القادمة</h3>${up.length?up.slice(0,8).map(evCard).join(''):'<p class="mute">لا توجد فعاليات قادمة حاليًا.</p>'}`};
+ app.innerHTML=`<section><div class="wrap"><div class="head"><h2>تقويم الفعاليات</h2><a class="more" href="#/events">كل الفعاليات ›</a></div><div id="cal"></div></div></section>`;draw();
+ document.getElementById('cal').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.nav!=null){const n=+b.dataset.nav;if(n==0){cur=new Date();cur.setDate(1);sel=today()}else cur.setMonth(cur.getMonth()-n);draw()}
+  else if(b.dataset.day){sel=b.dataset.day;draw();document.getElementById('cal').querySelector('h3:nth-of-type(2)')?.scrollIntoView({behavior:'smooth',block:'nearest'})}
+  else if(b.dataset.ics){const x=ev.find(z=>String(z.id)==b.dataset.ics);if(x)dlFile('event-'+x.id+'.ics',icsOf([x]))}
+  else if(b.dataset.all){dlFile('uqu-law-club-events.ics',icsOf(ev.filter(x=>dk(x.event_date)>=today())))}};
+};
+
+/* ---------- مساعد النادي ---------- */
+const NZ=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').toLowerCase();
+const cache={};const get=(k,f)=>cache[k]||(cache[k]=f().catch(()=>[]));
+const getEv=()=>get('ev',()=>pub('events',200)),getNews=()=>get('news',()=>pub('news',30));
+const lnk=(t,x)=>`<li><a href="#/${t}/${esc(x.slug||x.id)}" data-cl>${esc(x.title)}</a></li>`;
+const IN=[
+ {k:'greet',w:'سلام مرحبا اهلا هلا صباح مساء',a:async()=>'وعليكم السلام 👋 أنا مساعد النادي. اسأليني عن الفعاليات، الانضمام، الأخبار، اللجان، التقويم أو لوحة الشرف.'},
+ {k:'join',w:'انضم انضمام انضمام تسجيل اشترك عضويه عضو انتسب التحق',a:async()=>'للانضمام: افتحي الصفحة الرئيسية واضغطي «انضم إلينا» ثم عبّئي النموذج وارفقي سيرتك الذاتية، وستصلك نتيجة الطلب من الإدارة. <br><a href="javascript:void 0" data-act="join">اذهبي لنموذج الانضمام ›</a>'},
+ {k:'events',w:'فعاليه فعاليات ورشه ورش محاضره لقاء قادم قادمه موعد ندوه',a:async()=>{const t=today(),u=(await getEv()).filter(x=>dk(x.event_date)>=t).sort((a,b)=>dk(a.event_date)<dk(b.event_date)?-1:1).slice(0,4);return u.length?'الفعاليات القادمة:<ul>'+u.map(x=>lnk('events',x).replace('</a>',' — '+esc(fd(x.event_date))+'</a>')).join('')+'</ul><a href="#/calendar" data-cl>افتحي التقويم ›</a>':'لا توجد فعاليات قادمة معلنة حاليًا. تابعينا قريبًا! <a href="#/events" data-cl>الفعاليات السابقة ›</a>'}},
+ {k:'cal',w:'تقويم جدول اضافه تذكير',a:async()=>'في <a href="#/calendar" data-cl>تقويم الفعاليات</a> تقدرين تضيفين أي فعالية لتقويم جوالك (Google أو ICS) وتحمّلين تقويم النادي كاملًا مع تذكير قبل الفعالية.'},
+ {k:'news',w:'خبر اخبار جديد اخر مستجدات',a:async()=>{const n=(await getNews()).slice(0,4);return n.length?'آخر الأخبار:<ul>'+n.map(x=>lnk('news',x)).join('')+'</ul>':'لا توجد أخبار منشورة حاليًا.'}},
+ {k:'cert',w:'شهاده شهادات تحقق توثيق التحقق',a:async()=>'للتحقق من صحة أي شهادة صادرة من النادي ادخلي رقم التحقق في <a href="#/verify" data-cl>صفحة التحقق</a> أو امسحي رمز QR على الشهادة.'},
+ {k:'lib',w:'مكتبه كتاب كتب مجله مجلات دليل مرجع ملخص',a:async()=>'تجدين المجلات والأدلة والمراجع في <a href="#/library" data-cl>مكتبة النادي</a>، والمقالات في <a href="#/articles" data-cl>المجلة</a>.'},
+ {k:'rep',w:'تقرير تقارير',a:async()=>'تقارير النادي متاحة للتحميل من <a href="#/reports" data-cl>صفحة التقارير</a>.'},
+ {k:'com',w:'لجنه لجان قسم اقسام هيكل هيكله اداره',a:async()=>{const d=await get('dp',()=>db.from('club_departments').select('*').then(ok)),n=d.map(x=>x.name||x.title||x.name_ar).filter(Boolean).slice(0,10);return n.length?'لجان النادي وأقسامه:<ul>'+n.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul><a href="#/about" data-cl>الهيكلة ›</a>':'تجدين الهيكلة واللجان في <a href="#/about" data-cl>صفحة من نحن</a>.'}},
+ {k:'mem',w:'اعضاء دليل الاعضاء',a:async()=>'تعرّفي على الأعضاء في <a href="#/members" data-cl>دليل الأعضاء</a>.'},
+
+ {k:'con',w:'تواصل تواصل ايميل بريد حساب تويتر اكس رقم اتصال راسل',a:async()=>'تابعينا وراسلينا عبر حساب النادي في منصة X: <a href="https://x.com/uqu_law_club" target="_blank" rel="noopener">@uqu_law_club</a>'},
+ {k:'abt',w:'عن النادي من انتم رؤيه رسالة اهداف تعريف',a:async()=>'نادي الدراسات القضائية والأنظمة بجامعة أم القرى. اقرئي عنا في <a href="#/about" data-cl>من نحن</a> وإنجازاتنا في <a href="#/achievements" data-cl>الإنجازات</a>.'},
+ {k:'thx',w:'شكرا يعطيك العافيه مشكور ممتاز',a:async()=>'العفو! أنا بخدمتك دائمًا 🌿'}];
+const ask=async txt=>{const z=NZ(txt),toks=z.split(/[\s،,.؟?!]+/).filter(Boolean);let best=null,sc=0;
+ IN.forEach(i=>{const ws=NZ(i.w).split(/\s+/);const s=toks.filter(t=>ws.some(w=>t==w||(t.length>3&&(w.includes(t)||t.includes(w))))).length;if(s>sc){sc=s;best=i}});
+ if(best)return best.a();
+ const qs=toks.filter(t=>t.length>2);if(qs.length){const all=await Promise.all(['events','news','articles','library','reports'].map(t=>get('s'+t,()=>pub(t,60)).then(r=>r.map(x=>({...x,_t:t})))));
+  const hit=all.flat().map(x=>({x,s:qs.filter(t=>NZ(x.title).includes(t)).length})).filter(o=>o.s).sort((a,b)=>b.s-a.s).slice(0,3);
+  if(hit.length)return 'وجدت لك هذه النتائج:<ul>'+hit.map(o=>lnk(o.x._t,o.x)).join('')+'</ul>'}
+ return `ما لقيت إجابة مباشرة 🤔 جرّبي <a href="#/search/${encodeURIComponent(txt)}" data-cl>البحث في الموقع</a> أو اختاري أحد الاقتراحات.`};
+const fab=document.createElement('button');fab.id='cb-fab';fab.setAttribute('aria-label','مساعد النادي');fab.innerHTML='💬';
+const box=document.createElement('div');box.id='cb';box.setAttribute('role','dialog');box.setAttribute('aria-label','مساعد النادي');
+box.innerHTML=`<div class="h"><div><b>مساعد النادي ⚖️</b><small>أجيب عن أسئلتك فورًا</small></div><button aria-label="إغلاق">✕</button></div><div class="m" aria-live="polite"></div><div class="q">${['الفعاليات القادمة','كيف أنضم؟','آخر الأخبار','التقويم','اللجان'].map(x=>`<button>${x}</button>`).join('')}</div><form><input placeholder="اكتبي سؤالك…" aria-label="سؤال"><button>إرسال</button></form>`;
+const add=(h,me)=>{const m=box.querySelector('.m'),d=document.createElement('div');d.className='b '+(me?'me':'bot');d.innerHTML=h;m.appendChild(d);m.scrollTop=m.scrollHeight;return d};
+const say=async t=>{add(esc(t),1);const w=add('<span class="cb-dots"><i></i><i></i><i></i></span>');let h;try{h=await ask(t)}catch(e){h='تعذّر جلب المعلومات الآن، حاولي بعد قليل.'}await new Promise(r=>setTimeout(r,350));w.innerHTML=h;box.querySelector('.m').scrollTop=1e5};
+let started=0;const tog=()=>{box.classList.toggle('on');if(box.classList.contains('on')&&!started){started=1;add('أهلًا بك في نادي الدراسات القضائية والأنظمة 👋<br>كيف أقدر أساعدك؟')}};
+fab.onclick=tog;box.querySelector('.h button').onclick=tog;
+box.querySelector('.q').onclick=e=>{const b=e.target.closest('button');if(b)say(b.textContent)};
+box.querySelector('form').onsubmit=e=>{e.preventDefault();const i=e.target.querySelector('input'),v=i.value.trim();if(v){i.value='';say(v)}};
+box.onclick=e=>{const a=e.target.closest('a');if(!a)return;if(a.dataset.act=='join'){e.preventDefault();go('/');setTimeout(()=>document.getElementById('join')?.scrollIntoView({behavior:'smooth'}),900);if(innerWidth<700)tog()}else if(a.dataset.cl&&innerWidth<700)tog()};
+document.body.append(fab,box);
+})();
+
 pages.p=p=>pgPage(p);addEventListener('hashchange',route);function curY(){return Math.max(window.scrollY||0,document.documentElement.scrollTop||0,document.body.scrollTop||0)}function goUp(){[window,document.documentElement,document.body].forEach(e=>{try{e.scrollTo({top:0,behavior:'smooth'})}catch(_){e.scrollTop=0}})}window.goUp=goUp;const upChk=()=>{const y=curY(),h=Math.max(1,(document.documentElement.scrollHeight||document.body.scrollHeight)-innerHeight),p=Math.min(100,Math.max(0,y/h*100)),u=document.getElementById('up'),rp=document.querySelector('#rp i');if(rp)rp.style.width=p.toFixed(1)+'%';if(u){u.classList.toggle('on',y>300);u.style.setProperty('--p',Math.round(p))}};addEventListener('scroll',upChk,{passive:true,capture:true});upChk();
 document.addEventListener('click',e=>{const r=e.target.closest('[data-retry]');if(r&&window._fill&&window._fill[r.dataset.retry]){r.textContent='جارٍ التحميل…';window._fill[r.dataset.retry]()}});
 document.addEventListener('click',e=>{const a=e.target.closest('a[href^="/"]');if(a&&!e.metaKey&&!e.ctrlKey&&a.target!='_blank'){e.preventDefault();go(a.getAttribute('href'))}});
