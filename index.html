@@ -840,7 +840,7 @@ async function pgPage(p){const slug=p[1]||'';let r=null,err=false;
 const PG_STATIC=(document.querySelector('nav ul')||{}).innerHTML;
 function pgCur(){const h=location.hash||'#/';document.querySelectorAll('nav ul a').forEach(a=>{const u=a.getAttribute('href')||'';a.classList.toggle('cur',u==h||(u!='#/'&&u.length>2&&h.startsWith(u)))})}
 function pgApplyMenu(items){const ul=document.querySelector('nav ul');if(!ul)return;if(!items||!items.length){if(PG_STATIC!=null)ul.innerHTML=PG_STATIC;return pgCur()}
- ul.innerHTML=items.filter(x=>x.visible!==false).sort((a,b)=>(a.sort||0)-(b.sort||0)).map(x=>`<li><a href="${esc(SAFE(x.url))}"${isx(x.url)||x.newtab?' target="_blank" rel="noopener"':''}>${esc(x.label)}</a></li>`).join('');pgCur()}
+ ul.innerHTML=items.filter(x=>x.visible!==false).sort((a,b)=>(a.sort||0)-(b.sort||0)).map(x=>`<li><a href="${esc(SAFE(x.url))}"${isx(x.url)||x.newtab?' target="_blank" rel="noopener"':''}>${esc(x.label)}</a></li>`).join('')+(items.some(x=>String(x.url||'').indexOf('#/calendar')>-1)?'':'<li><a href="#/calendar">التقويم</a></li>');pgCur()}
 addEventListener('DOMContentLoaded',()=>{try{const c=JSON.parse(localStorage.getItem('club_menu_v1')||'null');if(c&&c.length)pgApplyMenu(c)}catch(e){}
  db.from('site_menu').select('*').eq('visible',true).order('sort').then(r=>{if(r.error)return;const d=r.data||[];try{d.length?localStorage.setItem('club_menu_v1',JSON.stringify(d)):localStorage.removeItem('club_menu_v1')}catch(e){}pgApplyMenu(d)},()=>{});
  addEventListener('hashchange',pgCur);pgCur()});
@@ -848,7 +848,7 @@ addEventListener('DOMContentLoaded',()=>{try{const c=JSON.parse(localStorage.get
 <script id="club-v7-js">
 /* ===== شريط الرجوع الذكي ===== */
 (()=>{const bb=document.getElementById('bb');if(!bb)return;
-const N={'':'الرئيسية',about:'من نحن',news:'الأخبار',events:'الفعاليات',articles:'المقالات',library:'مكتبة النادي',reports:'تقارير النادي',members:'دليل الأعضاء',partners:'الشراكات',achievements:'الإنجازات',search:'البحث',forms:'النماذج',verify:'التحقق من الشهادة',p:'صفحة'},FLAT=['about','members','search','forms','verify','p'];
+const N={'':'الرئيسية',about:'من نحن',news:'الأخبار',events:'الفعاليات',calendar:'التقويم',articles:'المقالات',library:'مكتبة النادي',reports:'تقارير النادي',members:'دليل الأعضاء',partners:'الشراكات',achievements:'الإنجازات',search:'البحث',forms:'النماذج',verify:'التحقق من الشهادة',p:'صفحة'},FLAT=['about','members','search','forms','verify','p'];
 const seg=h=>(h||'').replace(/^#\/?/,'').split('/').filter(Boolean).map(d=>{try{return decodeURIComponent(d)}catch(e){return d}});
 bb.innerHTML='<div class="wrap bb-in"><button type="button" class="bb-btn" id="bbb"><span class="bb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span><span class="bb-t"></span></button><span class="bb-cur"></span></div>';
 const bt=bb.querySelector('.bb-t'),bc=bb.querySelector('.bb-cur'),btn=bb.querySelector('#bbb'),trail=[];let idx=0,par='#/',via=false;
@@ -1267,7 +1267,7 @@ const IN=[
  {k:'greet',w:'سلام مرحبا اهلا هلا صباح مساء',a:async()=>'وعليكم السلام 👋 أنا مساعد النادي. اسأليني عن الفعاليات، الانضمام، الأخبار، اللجان، التقويم أو لوحة الشرف.'},
  {k:'join',w:'انضم انضمام انضمام تسجيل اشترك عضويه عضو انتسب التحق',a:async()=>'للانضمام: افتحي الصفحة الرئيسية واضغطي «انضم إلينا» ثم عبّئي النموذج وارفقي سيرتك الذاتية، وستصلك نتيجة الطلب من الإدارة. <br><a href="javascript:void 0" data-act="join">اذهبي لنموذج الانضمام ›</a>'},
  {k:'events',w:'فعاليه فعاليات ورشه ورش محاضره لقاء قادم قادمه موعد ندوه',a:async()=>{const t=today(),u=(await getEv()).filter(x=>dk(x.event_date)>=t).sort((a,b)=>dk(a.event_date)<dk(b.event_date)?-1:1).slice(0,4);return u.length?'الفعاليات القادمة:<ul>'+u.map(x=>lnk('events',x).replace('</a>',' — '+esc(fd(x.event_date))+'</a>')).join('')+'</ul><a href="#/calendar" data-cl>افتحي التقويم ›</a>':'لا توجد فعاليات قادمة معلنة حاليًا. تابعينا قريبًا! <a href="#/events" data-cl>الفعاليات السابقة ›</a>'}},
- {k:'cal',w:'تقويم جدول اضافه تذكير',a:async()=>'في <a href="#/calendar" data-cl>تقويم الفعاليات</a> تقدرين تضيفين أي فعالية لتقويم جوالك (Google أو ICS) وتحمّلين تقويم النادي كاملًا مع تذكير قبل الفعالية.'},
+ {k:'cal',w:'تقويم جدول اضافه اضيف اضافتها تذكير جوال جوالي ايفون ics',a:async()=>'في <a href="#/calendar" data-cl>تقويم الفعاليات</a> تقدرين تضيفين أي فعالية لتقويم جوالك (Google أو ICS) وتحمّلين تقويم النادي كاملًا مع تذكير قبل الفعالية.'},
  {k:'news',w:'خبر اخبار جديد اخر مستجدات',a:async()=>{const n=(await getNews()).slice(0,4);return n.length?'آخر الأخبار:<ul>'+n.map(x=>lnk('news',x)).join('')+'</ul>':'لا توجد أخبار منشورة حاليًا.'}},
  {k:'cert',w:'شهاده شهادات تحقق توثيق التحقق',a:async()=>'للتحقق من صحة أي شهادة صادرة من النادي ادخلي رقم التحقق في <a href="#/verify" data-cl>صفحة التحقق</a> أو امسحي رمز QR على الشهادة.'},
  {k:'lib',w:'مكتبه كتاب كتب مجله مجلات دليل مرجع ملخص',a:async()=>'تجدين المجلات والأدلة والمراجع في <a href="#/library" data-cl>مكتبة النادي</a>، والمقالات في <a href="#/articles" data-cl>المجلة</a>.'},
@@ -1278,23 +1278,79 @@ const IN=[
  {k:'con',w:'تواصل تواصل ايميل بريد حساب تويتر اكس رقم اتصال راسل',a:async()=>'تابعينا وراسلينا عبر حساب النادي في منصة X: <a href="https://x.com/uqu_law_club" target="_blank" rel="noopener">@uqu_law_club</a>'},
  {k:'abt',w:'عن النادي من انتم رؤيه رسالة اهداف تعريف',a:async()=>'نادي الدراسات القضائية والأنظمة بجامعة أم القرى. اقرئي عنا في <a href="#/about" data-cl>من نحن</a> وإنجازاتنا في <a href="#/achievements" data-cl>الإنجازات</a>.'},
  {k:'thx',w:'شكرا يعطيك العافيه مشكور ممتاز',a:async()=>'العفو! أنا بخدمتك دائمًا 🌿'}];
-const ask=async txt=>{const z=NZ(txt),toks=z.split(/[\s،,.؟?!]+/).filter(Boolean);let best=null,sc=0;
- IN.forEach(i=>{const ws=NZ(i.w).split(/\s+/);const s=toks.filter(t=>ws.some(w=>t==w||(t.length>3&&(w.includes(t)||t.includes(w))))).length;if(s>sc){sc=s;best=i}});
- if(best)return best.a();
- const qs=toks.filter(t=>t.length>2);if(qs.length){const all=await Promise.all(['events','news','articles','library','reports'].map(t=>get('s'+t,()=>pub(t,60)).then(r=>r.map(x=>({...x,_t:t})))));
-  const hit=all.flat().map(x=>({x,s:qs.filter(t=>NZ(x.title).includes(t)).length})).filter(o=>o.s).sort((a,b)=>b.s-a.s).slice(0,3);
-  if(hit.length)return 'وجدت لك هذه النتائج:<ul>'+hit.map(o=>lnk(o.x._t,o.x)).join('')+'</ul>'}
- return `ما لقيت إجابة مباشرة 🤔 جرّبي <a href="#/search/${encodeURIComponent(txt)}" data-cl>البحث في الموقع</a> أو اختاري أحد الاقتراحات.`};
+const DIG=s=>String(s).replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c));
+const FAQ_DEF=[
+ {k:'مقر,موقع النادي,وين مقر,وين النادي,اين النادي,اين مقر,مبنى,عنوان النادي,مكان النادي,كيف اوصل',a:'الطالبات في مبنى دال، الدور الأول، فرع الزاهر.'},
+ {k:'شروط القبول,شروط الانضمام,شروط,معايير القبول,متطلبات الانضمام',a:'يتم الإعلان عن شروط القبول سنويًا، تابعي الأخبار وحساب النادي في X.'},
+ {k:'اخر موعد,موعد التسجيل,متى التسجيل,اخر موعد للتسجيل,باب التسجيل,متى يفتح التسجيل,اخر يوم للتسجيل',a:'يختلف موعد التسجيل من عام لآخر، ويُعلن عنه في الأخبار وحسابات النادي.'},
+ {k:'من انشا,مين انشا,من أنشأ,من صمم,مين صمم,من طور,مين طور,من برمج,مين برمج,مطور المنصه,صانع المنصه,من وراء المنصه,فريق المنصه,من عمل الموقع,مين عمل الموقع',a:'أُنشئت المنصّة من قِبل الطالبة بتول عبدالمحسن الزهراني والطالبة أسماء عبدالمحسن الزهراني.'}];
+const loadFaq=async()=>{const r=await get('faq',()=>db.from('assistant_faq').select('*').eq('active',true).order('sort').then(ok));return r.length?r.map(x=>({k:x.keywords||'',a:x.answer||'',u:x.link_url||'',l:x.link_label||''})):FAQ_DEF};
+const mt=(t,x)=>t==x||(t.length>3&&x.length>2&&(x.includes(t)||t.includes(x)));
+const tokz=z=>z.split(/[\s،,.؟?!؛:()\-]+/).filter(Boolean);
+const cover=(toks,phrases)=>{const idx=new Set();let multi=0;phrases.forEach(p=>{const pt=NZ(p).split(/\s+/).filter(Boolean);if(!pt.length)return;const hit=pt.map(x=>toks.map((t,i)=>mt(t,x)?i:-1).filter(i=>i>=0));if(hit.every(h=>h.length)){hit.forEach(h=>h.forEach(i=>idx.add(i)));if(pt.length>1)multi=1}});return{idx,multi}};
+const MON={يناير:1,فبراير:2,مارس:3,ابريل:4,مايو:5,يونيو:6,يوليو:7,اغسطس:8,سبتمبر:9,اكتوبر:10,نوفمبر:11,ديسمبر:12,شباط:2,اذار:3,نيسان:4,ايار:5,حزيران:6,تموز:7,ايلول:9};
+const KINDS=[{l:'زيارة',p:'زيارات',r:/زيار/,t:/زيار/},{l:'ورشة',p:'ورش',r:/ورش/,t:/ورش/},{l:'محاضرة',p:'محاضرات',r:/محاضر/,t:/محاضر/},{l:'دورة',p:'دورات',r:/^(ال|و|ب|ل)?دور(ه|ات)/,t:/دور(ه|ات)/},{l:'لقاء',p:'لقاءات',r:/لقاء/,t:/لقاء|ملتقي/},{l:'ملتقى',p:'ملتقيات',r:/ملتقي/,t:/ملتقي|لقاء/},{l:'ندوة',p:'ندوات',r:/ندو/,t:/ندو/},{l:'مبادرة',p:'مبادرات',r:/مبادر/,t:/مبادر/},{l:'رحلة',p:'رحلات',r:/رحل/,t:/رحل/},{l:'معرض',p:'معارض',r:/معرض/,t:/معرض/},{l:'حفل',p:'حفلات',r:/حفل/,t:/حفل/}];
+const GEN=/^(ال|و|ب|ل)?(برنامج|برامج|فعاليه|فعاليات|نشاط|انشطه)/;
+const STOP=new Set('كم عدد كل جميع قائمه حصر اقيمت اقمنا اقامها تمت التي الذي اللي في من علي عن هل ما ماهي وش ايش اعطني ابغي ابي اريد هات لي روابط رابط بتاريخ تاريخ شهر عام سنه يوم هذا هذه الماضي الماضيه السابقه الحاليه النادي سابقا الشهر العام السنه الاسبوع ارشيف سجل انتهت مع او ثم الى'.split(' '));
+const parseRange=z=>{const d=new Date(),Y=d.getFullYear(),M=d.getMonth()+1,pad2=n=>String(n).padStart(2,'0'),mk=(y,m)=>y+'-'+pad2(m),inM=(y,m)=>k=>k.slice(0,7)==mk(y,m),lab=(y,m)=>new Date(y,m-1,1).toLocaleDateString('ar-SA',{month:'long',year:'numeric',calendar:'gregory'});
+ let m;if(m=z.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/)){const k=m[1]+'-'+pad2(+m[2])+'-'+pad2(+m[3]);return{test:x=>x==k,label:'بتاريخ '+fd(k),asc:1}}
+ if(m=z.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/)){const k=m[3]+'-'+pad2(+m[2])+'-'+pad2(+m[1]);return{test:x=>x==k,label:'بتاريخ '+fd(k),asc:1}}
+ if(/اليوم/.test(z)){const k=today();return{test:x=>x==k,label:'اليوم',asc:1}}
+ if(/امس/.test(z)){const e=new Date();e.setDate(e.getDate()-1);const k=ymd(e);return{test:x=>x==k,label:'أمس',asc:1}}
+ if(/(هذا|الحالي)\s*(ال)?شهر|الشهر الحالي/.test(z))return{test:inM(Y,M),label:'هذا الشهر ('+lab(Y,M)+')',asc:1};
+ if(/(الشهر|شهر)\s*(ال)?(ماضي|سابق)/.test(z)){const p=new Date(Y,M-2,1);return{test:inM(p.getFullYear(),p.getMonth()+1),label:'الشهر الماضي ('+lab(p.getFullYear(),p.getMonth()+1)+')',asc:1}}
+ if(/(هذا|هذه|الحالي|الحاليه)\s*(ال)?(عام|سنه)/.test(z))return{test:k=>k.slice(0,4)==String(Y),label:'في عام '+Y,asc:1};
+ if(/(عام|سنه)\s*(ال)?(ماضي|ماضيه|سابق|سابقه)/.test(z))return{test:k=>k.slice(0,4)==String(Y-1),label:'في عام '+(Y-1),asc:1};
+ if(/(هذا|هذه)\s*(ال)?اسبوع/.test(z)||/اسبوع\s*(ال)?(ماضي|سابق)/.test(z)){const last=/(ماضي|سابق)/.test(z),s=new Date();s.setDate(s.getDate()-s.getDay()-(last?7:0));const e=new Date(s);e.setDate(e.getDate()+6);const a=ymd(s),b=ymd(e);return{test:k=>k>=a&&k<=b,label:last?'الأسبوع الماضي':'هذا الأسبوع',asc:1}}
+ const toks=tokz(z);let mo=0;toks.forEach(t=>Object.keys(MON).forEach(n=>{if(!mo&&t.includes(n))mo=MON[n]}));
+ const yr=(z.match(/\b(20\d\d)\b/)||[])[1];
+ if(mo){const nums=(z.replace(/\b20\d\d\b/g,' ').match(/\b\d{1,2}\b/g)||[]).map(Number).filter(n=>n>=1&&n<=31);
+  if(yr&&nums.length){const k=yr+'-'+pad2(mo)+'-'+pad2(nums[0]);return{test:x=>x==k,label:'بتاريخ '+fd(k),asc:1}}
+  if(yr)return{test:inM(+yr,mo),label:'في '+lab(+yr,mo),asc:1};
+  if(nums.length){const dd=pad2(nums[0]),mm=pad2(mo);return{test:x=>x.slice(5)==mm+'-'+dd,label:'بتاريخ '+nums[0]+' '+new Date(2000,mo-1,1).toLocaleDateString('ar-SA',{month:'long',calendar:'gregory'})+' (كل الأعوام)'}}
+  return{test:x=>+x.slice(5,7)==mo,label:'في شهر '+new Date(2000,mo-1,1).toLocaleDateString('ar-SA',{month:'long',calendar:'gregory'})+' (كل الأعوام)'}}
+ if(yr)return{test:k=>k.slice(0,4)==yr,label:'في عام '+yr,asc:1};
+ return null};
+const progAns=async(z,toks)=>{const rg=parseRange(z),kind=KINDS.find(k=>toks.some(t=>k.r.test(t))),past=/(اقيمت|اقمنا|اقام|تمت|سابق|ماضي|ماضيه|انتهت)/.test(z);
+ let ev=(await get('evall',()=>pub('events',500))).filter(x=>dk(x.event_date));
+ if(rg)ev=ev.filter(x=>rg.test(dk(x.event_date)));if(past)ev=ev.filter(x=>dk(x.event_date)<=today());
+ if(kind)ev=ev.filter(x=>kind.t.test(NZ(x.title)));
+ const used=new Set(toks.filter(t=>GEN.test(t)||KINDS.some(k=>k.r.test(t))));
+ const extra=toks.filter(t=>t.length>3&&!STOP.has(t)&&!used.has(t)&&!/^\d+$/.test(t)&&!Object.keys(MON).some(n=>t.includes(n))&&!/^(ال)?(قادم|ماضي|سابق|حاليه|ماضيه|سابقه)/.test(t));
+ if(extra.length){const f=ev.filter(x=>extra.some(t=>NZ(x.title).includes(t.replace(/^(ال|و|ب|ل)/,''))));if(f.length)ev=f}
+ ev.sort((a,b)=>dk(a.event_date)<dk(b.event_date)?(rg&&rg.asc?-1:1):(rg&&rg.asc?1:-1));
+  if(!ev.length)return `ما لقيت ${kind?kind.l+' ':'برامج '}${rg?rg.label:'منشورة'}. جرّبي <a href="#/events" data-cl>أرشيف الفعاليات</a> أو <a href="#/calendar" data-cl>التقويم</a>.`;
+ const L=ev.slice(0,15),urls=ev.map(x=>evUrl(x));
+ return `<b>${ev.length} ${kind?(ev.length==1?kind.l:kind.p):(ev.length==1?'برنامج':'برامج')} ${rg?esc(rg.label):'أُقيمت'}:</b><ul>${L.map(x=>lnk('events',x).replace('</a>',' — '+esc(fd(x.event_date))+'</a>')).join('')}</ul>${ev.length>15?`<small>وغيرها ${ev.length-15} — <a href="#/events" data-cl>كل الفعاليات</a></small><br>`:''}<a href="javascript:void 0" data-copy="${esc(urls.join('\n'))}">📋 نسخ روابط الكل (${ev.length})</a>`};
+const searchTitles=async toks=>{const qs=toks.filter(t=>t.length>2&&!STOP.has(t));if(!qs.length)return'';const all=await Promise.all(['events','news','articles','library','reports'].map(t=>get('s'+t,()=>pub(t,60)).then(r=>r.map(x=>({...x,_t:t})))));
+ const hit=all.flat().map(x=>({x,s:qs.filter(t=>NZ(x.title).includes(t.replace(/^(ال|و|ب|ل)/,''))).length})).filter(o=>o.s).sort((a,b)=>b.s-a.s).slice(0,3);
+ return hit.length?'وجدت لك هذه النتائج:<ul>'+hit.map(o=>lnk(o.x._t,o.x)).join('')+'</ul>':''};
+const faqHtml=f=>esc(f.a).replace(/\n/g,'<br>')+(f.u&&/^(#|https?:)/.test(f.u)?`<br><a href="${esc(f.u)}"${/^https?:/.test(f.u)?' target="_blank" rel="noopener"':' data-cl'}>${esc(f.l||'المزيد ›')}</a>`:'');
+const splitQ=txt=>{const z=DIG(NZ(txt)),toks=tokz(z),out=[];let cur=[];const QW=/^و?(كم|وين|اين|متي|كيف|ايش|وش|هل|مين|ماذا|لماذا|من)$/;
+ const parts=z.split(/[،,؟?!.؛\n]+/).filter(s=>s.trim());(parts.length?parts:[z]).forEach(p=>{cur=[];tokz(p).forEach(t=>{if(QW.test(t)&&cur.length>=2){out.push(cur.join(' '));cur=[]}cur.push(t)});if(cur.length)out.push(cur.join(' '))});return out.length?out:[z]};
+const ansClause=async(z,seen)=>{const toks=tokz(z),blocks=[];
+ const isProg=toks.some(t=>GEN.test(t)||KINDS.some(k=>k.r.test(t)))&&!/قادم/.test(z)&&(parseRange(z)||/(كل|جميع|قائمه|حصر|عدد|كم|اقيمت|اقمنا|اقام|تمت|سابق|ماضي|ماضيه|انتهت|ارشيف|سجل)/.test(z)||KINDS.some(k=>toks.some(t=>k.r.test(t))));
+ const faq=await loadFaq(),C=[];
+ faq.forEach((f,i)=>{const c=cover(toks,f.k.split(',')),s=c.idx.size+c.multi;if(s)C.push({id:'f'+i,s,idx:c.idx,h:()=>faqHtml(f)})});
+ IN.forEach(n=>{const c=cover(toks,NZ(n.w).split(/\s+/)),s=c.idx.size;if(s)C.push({id:n.k,s,idx:c.idx,h:n.a})});
+ if(isProg){const all=new Set(toks.map((_,i)=>i));C.push({id:'prog',s:99,idx:all,h:()=>progAns(z,toks)})}
+ C.sort((a,b)=>b.s-a.s);const best=C.length?C[0].s:0,cov=new Set(),sel=[];
+ for(const c of C){if(sel.length>=3)break;if([...c.idx].some(i=>!cov.has(i))&&(c.s>=2||c.s>=best)){sel.push(c);c.idx.forEach(i=>cov.add(i))}}
+ if(!sel.length||(best<2&&!isProg)){const h=await searchTitles(toks);if(h)return[h]}
+ for(const c of sel){if(seen.has(c.id))continue;seen.add(c.id);blocks.push(await c.h())}
+ return blocks};
+const ask=async txt=>{const seen=new Set(),out=[];for(const cl of splitQ(txt)){(await ansClause(cl,seen)).forEach(b=>out.push(b))}
+ return out.length?out.join('<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)"></div>'):`ما لقيت إجابة مباشرة 🤔 جرّبي <a href="#/search/${encodeURIComponent(txt)}" data-cl>البحث في الموقع</a> أو اختاري أحد الاقتراحات.`};
 const fab=document.createElement('button');fab.id='cb-fab';fab.setAttribute('aria-label','مساعد النادي');fab.innerHTML='💬';
 const box=document.createElement('div');box.id='cb';box.setAttribute('role','dialog');box.setAttribute('aria-label','مساعد النادي');
-box.innerHTML=`<div class="h"><div><b>مساعد النادي ⚖️</b><small>أجيب عن أسئلتك فورًا</small></div><button aria-label="إغلاق">✕</button></div><div class="m" aria-live="polite"></div><div class="q">${['الفعاليات القادمة','كيف أنضم؟','آخر الأخبار','التقويم','اللجان'].map(x=>`<button>${x}</button>`).join('')}</div><form><input placeholder="اكتبي سؤالك…" aria-label="سؤال"><button>إرسال</button></form>`;
+box.innerHTML=`<div class="h"><div><b>مساعد النادي ⚖️</b><small>أجيب عن أسئلتك فورًا</small></div><button aria-label="إغلاق">✕</button></div><div class="m" aria-live="polite"></div><div class="q">${['الفعاليات القادمة','كيف أنضم؟','الزيارات التي أُقيمت','برامج هذا العام','مقر النادي','من أنشأ المنصة'].map(x=>`<button>${x}</button>`).join('')}</div><form><input placeholder="اكتبي سؤالك…" aria-label="سؤال"><button>إرسال</button></form>`;
 const add=(h,me)=>{const m=box.querySelector('.m'),d=document.createElement('div');d.className='b '+(me?'me':'bot');d.innerHTML=h;m.appendChild(d);m.scrollTop=m.scrollHeight;return d};
 const say=async t=>{add(esc(t),1);const w=add('<span class="cb-dots"><i></i><i></i><i></i></span>');let h;try{h=await ask(t)}catch(e){h='تعذّر جلب المعلومات الآن، حاولي بعد قليل.'}await new Promise(r=>setTimeout(r,350));w.innerHTML=h;box.querySelector('.m').scrollTop=1e5};
 let started=0;const tog=()=>{box.classList.toggle('on');if(box.classList.contains('on')&&!started){started=1;add('أهلًا بك في نادي الدراسات القضائية والأنظمة 👋<br>كيف أقدر أساعدك؟')}};
 fab.onclick=tog;box.querySelector('.h button').onclick=tog;
 box.querySelector('.q').onclick=e=>{const b=e.target.closest('button');if(b)say(b.textContent)};
 box.querySelector('form').onsubmit=e=>{e.preventDefault();const i=e.target.querySelector('input'),v=i.value.trim();if(v){i.value='';say(v)}};
-box.onclick=e=>{const a=e.target.closest('a');if(!a)return;if(a.dataset.act=='join'){e.preventDefault();go('/');setTimeout(()=>document.getElementById('join')?.scrollIntoView({behavior:'smooth'}),900);if(innerWidth<700)tog()}else if(a.dataset.cl&&innerWidth<700)tog()};
+box.onclick=e=>{const a=e.target.closest('a');if(!a)return;if(a.dataset.copy){e.preventDefault();const t=a.dataset.copy;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{a.textContent='تم نسخ الروابط ✓'},()=>{a.textContent='تعذّر النسخ'});return}if(a.dataset.act=='join'){e.preventDefault();go('/');setTimeout(()=>document.getElementById('join')?.scrollIntoView({behavior:'smooth'}),900);if(innerWidth<700)tog()}else if(a.dataset.cl&&innerWidth<700)tog()};
 document.body.append(fab,box);
 })();
 
