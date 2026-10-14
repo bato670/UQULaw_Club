@@ -1,0 +1,41 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>تثبيت تطبيق النادي</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0E5E5B">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{--teal:#0E5E5B;--gold:#A9844B;--ink:#12302F;--bg:#fff;--soft:#F4ECDA}
+@media(prefers-color-scheme:dark){:root{--ink:#e8f0ef;--bg:#0f1c1b;--soft:#1c2b29}}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:system-ui,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:calc(24px + env(safe-area-inset-top,0px)) 20px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+img.ic{width:104px;height:104px;border-radius:24px;box-shadow:0 6px 24px rgba(14,94,91,.18)}
+h1{font-size:22px;margin:4px 0 0;color:var(--teal)}@media(prefers-color-scheme:dark){h1{color:#7fc4bf}}
+p{margin:0;line-height:1.8;max-width:420px}.sub{color:var(--gold);font-weight:600}
+.card{width:100%;max-width:420px;background:var(--soft);border-radius:16px;padding:16px;text-align:right}
+.card ol{margin:0;padding:0 20px 0 0;line-height:2}
+button.go{width:100%;max-width:420px;border:0;border-radius:14px;background:var(--teal);color:#fff;font:600 17px inherit;padding:15px;cursor:pointer}
+.hide{display:none!important}#qr{background:#fff;padding:10px;border-radius:12px;display:inline-block}
+small{color:#6b7b7a}
+</style></head><body>
+<img class="ic" src="icon-192.png" alt="شعار النادي"><h1>نادي الدراسات القضائية والأنظمة</h1><p class="sub">جامعة أم القرى</p>
+<p id="lead">ثبّت التطبيق على جوالك لتصل إلى مهامك وفعاليات النادي بضغطة واحدة، بلا متجر ولا تسجيل.</p>
+<div id="done" class="card hide"><b>التطبيق مثبّت عندك بالفعل.</b><br>افتحه من شاشة جوالك الرئيسية.</div>
+<button id="inst" class="go hide" type="button">تثبيت التطبيق</button>
+<div id="ios" class="card hide"><b>على آيفون (من متصفح Safari):</b><ol><li>اضغط زر المشاركة <b>⬆︎</b> أسفل الشاشة</li><li>اختر «إضافة إلى الشاشة الرئيسية»</li><li>اضغط «إضافة»</li></ol><small id="notsaf" class="hide">افتح هذه الصفحة من Safari، فالتثبيت لا يعمل من المتصفحات الأخرى على آيفون.</small></div>
+<div id="and" class="card hide"><b>إن لم يظهر زر التثبيت (أندرويد):</b><ol><li>افتح قائمة المتصفح ⋮</li><li>اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»</li></ol></div>
+<div id="desk" class="card hide" style="text-align:center"><b>افتح الصفحة من جوالك</b><p style="margin:6px auto 12px">امسح الرمز بكاميرا الجوال:</p><div id="qr"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){var $=function(i){return document.getElementById(i)},ua=navigator.userAgent,
+ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),
+and=/Android/.test(ua),saf=/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua),
+standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,dp=null;
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+if(standalone){$('done').classList.remove('hide');$('lead').classList.add('hide');return}
+if(ios){$('ios').classList.remove('hide');if(!saf)$('notsaf').classList.remove('hide')}
+else if(and){$('and').classList.remove('hide')}
+else{$('desk').classList.remove('hide');try{new QRCode($('qr'),{text:location.href,width:176,height:176,colorDark:'#0E5E5B',colorLight:'#ffffff'})}catch(e){}}
+addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;$('inst').classList.remove('hide');$('and').classList.add('hide')});
+$('inst').onclick=function(){if(!dp)return;dp.prompt();dp.userChoice.finally(function(){dp=null;$('inst').classList.add('hide')})};
+addEventListener('appinstalled',function(){$('inst').classList.add('hide');$('done').classList.remove('hide')});
+})();
+</script></body></html>
