@@ -1,0 +1,100 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0E5E5B"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>مهامي — نادي الدراسات القضائية والأنظمة</title>
+<style>
+:root{color-scheme:light;--t:#0E5E5B;--g:#A9844B;--gs:#F4ECDA;--ink:#12302F;--m:#5d7170;--l:#e3ebe8}
+*{box-sizing:border-box}html,body{margin:0;background:#fff}
+body{font-family:system-ui,"Segoe UI",Tahoma,sans-serif;color:var(--ink);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.w{max-width:560px;margin:0 auto;padding:14px 16px 60px}
+header{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid var(--g)}
+header img{width:42px;height:42px;border-radius:10px}header b{color:var(--t);font-size:17px;flex:1}
+button,input,textarea,select{font:inherit}
+button{border:1px solid var(--l);background:#fff;border-radius:10px;padding:9px 14px;cursor:pointer;color:var(--ink)}
+button.p{background:var(--t);color:#fff;border-color:var(--t)}button.g{background:var(--gs);border-color:var(--gs);color:#6b4f1f}
+input,textarea,select{width:100%;border:1px solid var(--l);border-radius:10px;padding:10px;background:#fff;color:var(--ink);margin:4px 0 10px}
+.c{border:1px solid var(--l);border-radius:14px;padding:13px;margin:10px 0}.c h3{margin:0 0 4px;font-size:16px}
+.st{display:inline-block;font-size:12px;padding:2px 10px;border-radius:99px;background:var(--gs);color:#6b4f1f}
+.st.ok{background:#dff0ea;color:var(--t)}.st.rt{background:#fbe4e0;color:#8a2c1f}.m{color:var(--m);font-size:13px}
+.n{background:var(--gs);border-radius:12px;padding:10px 12px;margin:8px 0}
+h2{font-size:15px;color:var(--t);margin:22px 0 4px}
+.ev{border-right:3px solid var(--g);padding:2px 10px;margin:8px 0;font-size:14px}.ev small{color:var(--m)}
+.tabs{display:flex;gap:6px;margin:12px 0}.tabs button{flex:1}.tabs .on{background:var(--t);color:#fff;border-color:var(--t)}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+</style></head><body><div class="w"><header><img src="icon-192.png" alt=""><b>مهامي</b><button id="out" style="display:none">خروج</button></header><div id="app"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+var SB_URL="https://dsinztikwvuqhhwrhisg.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzaW56dGlrd3Z1cWhod3JoaXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NTQ2MDcsImV4cCI6MjEwNjQzMDYwN30.MhBz5vD_s4u87y6c0tz1LgPtx18sjuEir0tju0f-ieQ",MEMBER_DOMAIN="members.club",PUSH_KEY="";
+var db=supabase.createClient(SB_URL,SB_KEY),app=document.getElementById('app'),ME=null,TAB='tasks',OPEN=null;
+var ST={assigned:['بانتظار قبولك',''],accepted:['قيد التنفيذ',''],submitted:['بانتظار الاعتماد',''],returned:['أُعيدت للتعديل','rt'],approved:['معتمدة','ok']};
+var AC={assigned:'أُسندت إليك',accepted:'قبول المهمة',file:'رفع ملف',note:'ملاحظة',submitted:'تسليم للاعتماد',returned:'إعادة للتعديل',approved:'اعتماد'};
+function E(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function T(m){alert(m)}
+function err(e){T((e&&e.message)||'حدث خطأ')}
+function login(msg){app.textContent='';document.getElementById('out').style.display='none';
+ var c=E('div','c');c.appendChild(E('h3',null,'تسجيل دخول الأعضاء'));if(msg)c.appendChild(E('p','m',msg));
+ var u=E('input');u.placeholder='الرقم الجامعي أو البريد';u.autocomplete='username';u.dir='ltr';var p=E('input');p.type='password';p.placeholder='كلمة المرور';p.autocomplete='current-password';p.dir='ltr';
+ var b=E('button','p','دخول');b.onclick=function(){var id=u.value.trim();if(!id||!p.value)return T('أدخل البيانات');b.disabled=true;
+  db.auth.signInWithPassword({email:id.indexOf('@')>0?id:id+'@'+MEMBER_DOMAIN,password:p.value}).then(function(r){b.disabled=false;if(r.error)T('بيانات الدخول غير صحيحة');else boot()})};
+ c.appendChild(u);c.appendChild(p);c.appendChild(b);app.appendChild(c)}
+function boot(){db.auth.getUser().then(function(r){var us=r.data&&r.data.user;if(!us)return login();
+ db.from('staff_roles').select('role,full_name,wing,committee,is_active').eq('user_id',us.id).maybeSingle().then(function(q){
+  var d=q.data;if(!d||d.is_active===false)return db.auth.signOut().then(function(){login('هذا الحساب غير مفعّل. تواصل مع الإدارة.')});
+  if(d.role!=='member')return db.auth.signOut().then(function(){login('هذا حساب إداري. ادخل من لوحة الإدارة.')});
+  ME={uid:us.id,name:d.full_name,wing:d.wing,committee:d.committee};document.getElementById('out').style.display='';home()})})}
+document.getElementById('out').onclick=function(){db.auth.signOut().then(function(){ME=null;OPEN=null;login()})};
+function home(){app.textContent='';var h=E('p',null,'أهلًا، '+ME.name);h.style.fontWeight='600';h.style.margin='14px 0 0';app.appendChild(h);
+ if(ME.committee)app.appendChild(E('div','m',ME.committee));
+ var nb=E('div');app.appendChild(nb);notes(nb);
+ var tb=E('div','tabs');[['tasks','مهامي'],['prof','ملفي المهني'],['acct','حسابي']].forEach(function(x){var b=E('button',x[0]==TAB?'on':'',x[1]);b.onclick=function(){TAB=x[0];OPEN=null;home()};tb.appendChild(b)});app.appendChild(tb);
+ var body=E('div');app.appendChild(body);if(TAB=='tasks')OPEN?detail(body,OPEN):tasks(body);else if(TAB=='prof')prof(body);else acct(body)}
+function notes(el){db.from('staff_notifications').select('id,title,body,created_at').is('read_at',null).order('created_at',{ascending:false}).limit(5).then(function(r){
+ if(r.error||!r.data||!r.data.length)return;r.data.forEach(function(n){var d=E('div','n'),b=E('b',null,n.title);d.appendChild(b);if(n.body)d.appendChild(E('div','m',n.body));
+  var k=E('button',null,'تمت القراءة');k.style.marginTop='6px';k.onclick=function(){db.from('staff_notifications').update({read_at:new Date().toISOString()}).eq('id',n.id).then(function(){d.remove()})};d.appendChild(k);el.appendChild(d)})})}
+function tasks(el){el.appendChild(E('p','m','جارٍ التحميل…'));
+ db.from('tasks').select('id,title,status,due_date,rating,feedback').eq('assignee_uid',ME.uid).order('due_date',{ascending:true,nullsFirst:false}).then(function(r){el.textContent='';
+  if(r.error)return el.appendChild(E('p','m','تعذّر التحميل. تأكد من تنفيذ ملفات SQL.'));
+  if(!r.data.length)return el.appendChild(E('div','c','لا توجد مهام مسندة إليك بعد.'));
+  r.data.forEach(function(t){var c=E('div','c');c.appendChild(E('h3',null,t.title));var s=ST[t.status]||[t.status,''];c.appendChild(E('span','st '+s[1],s[0]));
+   if(t.due_date)c.appendChild(E('div','m','الموعد: '+t.due_date));var b=E('button','p','فتح');b.style.marginTop='8px';b.onclick=function(){OPEN=t.id;home()};c.appendChild(b);el.appendChild(c)})})}
+function act(id,a,note,file){return db.rpc('task_member_action',{p_task:id,p_action:a,p_note:note||null,p_file:file||null}).then(function(r){if(r.error)throw r.error})}
+function detail(el,id){el.appendChild(E('p','m','جارٍ التحميل…'));
+ Promise.all([db.from('tasks').select('*').eq('id',id).single(),db.from('task_events').select('*').eq('task_id',id).order('created_at')]).then(function(x){el.textContent='';
+  var t=x[0].data,ev=x[1].data||[];if(!t)return el.appendChild(E('p','m','المهمة غير متاحة'));
+  var bk=E('button',null,'‹ رجوع');bk.onclick=function(){OPEN=null;home()};el.appendChild(bk);
+  var c=E('div','c');c.appendChild(E('h3',null,t.title));var s=ST[t.status]||[t.status,''];c.appendChild(E('span','st '+s[1],s[0]));
+  if(t.due_date)c.appendChild(E('div','m','الموعد: '+t.due_date));
+  if(t.status=='approved'&&t.rating)c.appendChild(E('div',null,'التقييم: '+t.rating+' / 5'));if(t.feedback)c.appendChild(E('div','n',t.feedback));el.appendChild(c);
+  el.appendChild(E('h2',null,'سجل المهمة'));
+  ev.forEach(function(e){var d=E('div','ev'),b=E('b',null,(AC[e.action]||e.action));d.appendChild(b);d.appendChild(E('small',null,' · '+(e.actor_name||'')+' · '+new Date(e.created_at).toLocaleDateString('ar-SA')));
+   if(e.note)d.appendChild(E('div',null,e.note));
+   if(e.file_path){var o=E('button',null,'فتح الملف');o.onclick=function(){db.storage.from('staff-private').createSignedUrl(e.file_path,300).then(function(r){if(r.error)err(r.error);else window.open(r.data.signedUrl,'_blank')})};d.appendChild(o)}el.appendChild(d)});
+  if(t.status=='approved')return;
+  var box=E('div','c'),run=function(p){p.then(function(){OPEN=id;home()}).catch(err)};
+  if(t.status=='assigned'){var a=E('button','p','قبول المهمة');a.onclick=function(){run(act(id,'accept'))};box.appendChild(a)}
+  else{var f=E('input');f.type='file';var n=E('textarea');n.rows=3;n.placeholder='ملاحظة أو رد (اختياري)';
+   var up=E('button','g','رفع الملف');up.onclick=function(){var fl=f.files[0];if(!fl)return T('اختر ملفًا');if(fl.size>20*1048576)return T('الحد 20 ميجابايت');
+    var ext=(fl.name.split('.').pop()||'bin').replace(/[^a-z0-9]/gi,'').toLowerCase()||'bin',path='tasks/'+id+'/'+Date.now()+'.'+ext;up.disabled=true;
+    db.storage.from('staff-private').upload(path,fl,{contentType:fl.type||'application/octet-stream'}).then(function(r){if(r.error)throw r.error;return act(id,'file',fl.name,path)}).then(function(){OPEN=id;home()}).catch(function(e){up.disabled=false;err(e)})};
+   var sn=E('button',null,'إرسال ملاحظة');sn.onclick=function(){if(!n.value.trim())return T('اكتب الملاحظة');run(act(id,'note',n.value.trim()))};
+   box.appendChild(E('b',null,'إرفاق عملك'));box.appendChild(f);box.appendChild(up);box.appendChild(n);box.appendChild(sn);
+   if(t.status=='accepted'||t.status=='returned'){var sb=E('button','p',t.status=='returned'?'إعادة التسليم':'تسليم للاعتماد');sb.style.margin='10px 0 0';sb.style.width='100%';sb.onclick=function(){if(confirm('تأكيد التسليم؟'))run(act(id,'submit',n.value.trim()||null))};box.appendChild(sb)}}
+  el.appendChild(box)})}
+function prof(el){db.from('member_profiles').select('public_token,is_public,bio,university_id').eq('user_id',ME.uid).maybeSingle().then(function(r){var d=r.data;if(!d)return el.appendChild(E('div','c','لم يُجهَّز ملفك المهني بعد.'));
+ var c=E('div','c');c.appendChild(E('h3',null,'ملفي المهني الموثّق'));c.appendChild(E('p','m','صفحة تعرض ساعاتك ومهامك المعتمدة وشهاداتك، ويمكنك مشاركتها برابط أو QR.'));
+ var b=E('textarea');b.rows=3;b.maxLength=500;b.value=d.bio||'';b.placeholder='نبذة قصيرة عنك';var l=E('label');var k=E('input');k.type='checkbox';k.checked=!!d.is_public;k.style.width='auto';k.style.margin='0 0 0 8px';l.appendChild(k);l.appendChild(document.createTextNode('أوافق على نشر ملفي برابط عام'));
+ var s=E('button','p','حفظ');s.style.margin='10px 0';s.onclick=function(){db.rpc('member_profile_self',{p_bio:b.value,p_public:k.checked}).then(function(x){if(x.error)err(x.error);else T('تم الحفظ')})};
+ c.appendChild(b);c.appendChild(l);c.appendChild(E('br'));c.appendChild(s);
+ var u=new URL('profile.html',location.href);u.searchParams.set('m',d.public_token);var a=E('a',null,'فتح صفحة ملفي');a.href=u.href;a.target='_blank';a.style.display='block';c.appendChild(a);el.appendChild(c)})}
+function acct(el){var c=E('div','c');c.appendChild(E('h3',null,'تغيير كلمة المرور'));var p=E('input');p.type='password';p.placeholder='كلمة مرور جديدة (8 أحرف على الأقل)';p.dir='ltr';
+ var b=E('button','p','حفظ');b.onclick=function(){if(p.value.length<8)return T('8 أحرف على الأقل');db.auth.updateUser({password:p.value}).then(function(r){if(r.error)err(r.error);else{p.value='';T('تم تغيير كلمة المرور')}})};c.appendChild(p);c.appendChild(b);el.appendChild(c);
+ var d=E('div','c');d.appendChild(E('h3',null,'الإشعارات على جوالك'));
+ if(!PUSH_KEY||!('serviceWorker' in navigator)||!('PushManager' in window)){d.appendChild(E('p','m','الإشعارات الفورية غير مفعّلة بعد من الإدارة، أو أن جوالك لا يدعمها. على آيفون ثبّت التطبيق أولًا من صفحة التثبيت.'))}
+ else{var e=E('button','p','تفعيل الإشعارات');e.onclick=function(){push().then(function(){T('تم التفعيل')}).catch(err)};d.appendChild(e)}el.appendChild(d);
+ var i=E('a',null,'تثبيت التطبيق على الجوال');i.href='install.html';i.style.display='block';i.style.margin='14px 4px';el.appendChild(i)}
+function push(){return Notification.requestPermission().then(function(p){if(p!=='granted')throw new Error('لم يُمنح إذن الإشعارات');return navigator.serviceWorker.ready}).then(function(reg){
+ var raw=atob((PUSH_KEY+'==='.slice((PUSH_KEY.length+3)%4)).replace(/-/g,'+').replace(/_/g,'/')),k=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)k[i]=raw.charCodeAt(i);
+ return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k})}).then(function(s){var j=s.toJSON();return db.from('push_subscriptions').upsert({endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth},{onConflict:'endpoint'})}).then(function(r){if(r.error)throw r.error})}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+boot();
+</script></body></html>
