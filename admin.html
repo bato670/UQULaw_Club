@@ -252,7 +252,7 @@ const pfOpen=async p=>{const w=window.open('','_blank');const s=await db.storage
 const isU=u=>/^https?:\/\//i.test(u||'');
 const COMMON=[['title','العنوان *','text'],['slug','الرابط المستقل (slug) — يُولَّد تلقائيًا إن تُرك فارغًا','text']];
 const F={
- events:{n:'الفعاليات',f:[...COMMON,['event_date','التاريخ','date'],['category','التصنيف','text'],['excerpt','المقتطف','ta'],['cover_url','الصورة الرئيسية','img'],['body','النص','ta'],['blocks','تصميم صفحة الفعالية: أضف نصًا أو صورًا أو اقتباسًا بالترتيب الذي تريدينه (إن تُرك فارغًا يُستخدم «النص» أعلاه)','json']]},
+ events:{n:'الفعاليات',f:[...COMMON,['event_date','التاريخ','date'],['category','التصنيف','text'],['excerpt','المقتطف','ta'],['cover_url','الصورة الرئيسية (اختياري — إن تُرك فارغًا يظهر غلاف «برامج ودورات» تلقائيًا)','img'],['body','النص','ta'],['blocks','تصميم صفحة الفعالية: أضف نصًا أو صورًا أو اقتباسًا بالترتيب الذي تريدينه (إن تُرك فارغًا يُستخدم «النص» أعلاه)','json']]},
  news:{n:'الأخبار',f:[...COMMON,['news_date','التاريخ','date'],['category','التصنيف','text'],['excerpt','المقتطف','ta'],['cover_url','الصورة','img'],['body','النص','ta'],['link_url','رابط التغريدة (X) أو رابط خارجي (اختياري)','text']]},
  articles:{n:'المقالات',f:[...COMMON,['author','الكاتب','text'],['reviewer','المدقق','text'],['excerpt','المقتطف','ta'],['cover_url','صورة المقالة','img'],['file_url','ملف المقال (PDF)','file'],['body','نص المقالة','ta']]},
  library_items:{n:'المكتبة',f:[...COMMON,['category','التصنيف','text'],['year','السنة','number'],['description','الوصف','ta'],['cover_url','الغلاف','img'],['file_url','الملف','file']]},
